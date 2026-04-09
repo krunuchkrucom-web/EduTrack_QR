@@ -1,4 +1,4 @@
-const API_URL = "URL_APPS_SCRIPT_ที่ได้จากการ_DEPLOY";
+const API_URL = "https://script.google.com/macros/s/AKfycbypYMpS7OyHB-Q8vk7-35TVg0R06BPSDj650SIBnJKmmXlmN6a_8PFGBgGWe8ZP6cE/exec";
 let auth = JSON.parse(localStorage.getItem('auth')) || null;
 
 async function apiCall(data) {
