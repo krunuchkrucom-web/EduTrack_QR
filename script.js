@@ -66,3 +66,43 @@ function teacherScanner() {
 
 function logout() { localStorage.clear(); location.reload(); }
 window.onload = initApp;
+
+
+let selectedRole = "";
+
+function selectRole(role) {
+    selectedRole = role;
+    document.getElementById('role-view').style.display = 'none';
+    document.getElementById('login-view').style.display = 'block';
+    
+    // ปรับหัวข้อตามบทบาทที่เลือก
+    document.getElementById('login-title').innerText = (role === 'Student') ? "นักเรียน Login" : "ผู้สอน Login";
+    document.getElementById('login-subtitle').innerText = (role === 'Student') ? "กรุณาใช้รหัสนักเรียนในการเข้าสู่ระบบ" : "สำหรับเจ้าหน้าที่และครูผู้สอน";
+}
+
+function backToRole() {
+    document.getElementById('role-view').style.display = 'flex';
+    document.getElementById('login-view').style.display = 'none';
+}
+
+// แก้ไขฟังก์ชัน handleLogin เดิมเล็กน้อยเพื่อให้เช็ค Role ตรงกัน
+async function handleLogin() {
+    const user = document.getElementById('username').value;
+    const pass = document.getElementById('password').value;
+    
+    const res = await apiCall({ action: 'login', user, pass });
+    
+    if(res.success) {
+        // ตรวจสอบว่า Role ใน Sheet ตรงกับที่เลือกหน้าแรกหรือไม่
+        if(res.role !== selectedRole) {
+            Swal.fire('ผิดพลาด', `บัญชีนี้ไม่ใช่สิทธิ์ ${selectedRole === 'Student' ? 'นักเรียน' : 'ผู้สอน'}`, 'warning');
+            return;
+        }
+        
+        auth = res;
+        localStorage.setItem('auth', JSON.stringify(res));
+        initApp();
+    } else {
+        Swal.fire('Error', 'ชื่อผู้ใช้หรือรหัสผ่านผิด', 'error');
+    }
+}
