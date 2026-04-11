@@ -1,82 +1,100 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EduTrack QR - Classroom Pro Hub</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div id="loader" class="loader-overlay" style="display:none;">
-        <div class="spinner-border text-light" role="status"></div>
-    </div>
+const API_URL = "https://script.google.com/macros/s/AKfycbwHV8K0Me5It_ePtkt4EhEnFPzypA6Rdpl-zmpU-vABr2fTeFYQGI8DZSppXSggnuPbtw/exec";
+let auth = JSON.parse(localStorage.getItem('auth')) || null;
+let currentSelectedRole = ""; 
 
-    <div id="app">
-        <div id="role-view" class="container d-flex align-items-center justify-content-center min-vh-100">
-            <div class="text-center">
-                <div class="mb-5">
-                    <img src="https://cdn-icons-png.flaticon.com/512/2997/2997313.png" width="100" class="mb-3">
-                    <h1 class="fw-bold">EduTrack <span class="text-primary italic">QR</span></h1>
-                    <p class="text-muted">ระบบจัดการห้องเรียนและเช็คชื่ออัจฉริยะ</p>
-                </div>
-                
-                <div class="row g-4 justify-content-center">
-                    <div class="col-11 col-sm-5">
-                        <div class="role-card shadow-sm p-4 bg-white rounded-4 border-0 h-100" onclick="selectRole('Student')">
-                            <div class="icon-box bg-info-light mb-3 mx-auto">
-                                <img src="https://cdn-icons-png.flaticon.com/512/3429/3429433.png" width="60">
-                            </div>
-                            <h4 class="fw-bold text-dark">สำหรับนักเรียน</h4>
-                            <p class="small text-muted mb-0">ดูสถิติมาเรียน & ส่งงาน</p>
-                        </div>
-                    </div>
-                    <div class="col-11 col-sm-5">
-                        <div class="role-card shadow-sm p-4 bg-white rounded-4 border-0 h-100" onclick="selectRole('Teacher')">
-                            <div class="icon-box bg-warning-light mb-3 mx-auto">
-                                <img src="https://cdn-icons-png.flaticon.com/512/906/906175.png" width="60">
-                            </div>
-                            <h4 class="fw-bold text-dark">สำหรับผู้สอน</h4>
-                            <p class="small text-muted mb-0">จัดการข้อมูล & ตั้งค่าระบบ</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+// ฟังก์ชันเรียก API
+async function apiCall(data) {
+    const loader = document.getElementById('loader');
+    if(loader) loader.style.display = 'flex';
+    try {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
+        const json = await res.json();
+        if(loader) loader.style.display = 'none';
+        return json;
+    } catch (err) {
+        if(loader) loader.style.display = 'none';
+        Swal.fire('Error', 'ไม่สามารถเชื่อมต่อ Server ได้', 'error');
+        return { success: false };
+    }
+}
 
-        <div id="login-view" class="container mt-5" style="display:none;">
-            <div class="text-center mb-4">
-                 <button class="btn btn-sm btn-outline-secondary rounded-pill mb-3" onclick="backToRole()">← เปลี่ยนสถานะ</button>
-                 <h2 id="login-title" class="fw-bold text-primary">เข้าสู่ระบบ</h2>
-                 <p id="role-badge" class="badge rounded-pill shadow-sm px-3 py-2"></p>
-            </div>
-            <div class="login-card mx-auto shadow-lg p-5 rounded-5 bg-white" style="max-width: 400px;">
-                <div class="mb-3">
-                    <label class="form-label small fw-bold">Username</label>
-                    <input type="text" id="username" class="form-control rounded-pill border-0 bg-light px-3" placeholder="กรอกชื่อผู้ใช้">
-                </div>
-                <div class="mb-4">
-                    <label class="form-label small fw-bold">Password</label>
-                    <input type="password" id="password" class="form-control rounded-pill border-0 bg-light px-3" placeholder="กรอกรหัสผ่าน">
-                </div>
-                <button onclick="handleLogin()" class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow">เข้าสู่ระบบ</button>
-            </div>
-        </div>
-        
-        <div id="main-view" style="display:none;">
-            <nav class="navbar shadow-sm mb-4 px-3 sticky-top bg-white">
-                <span class="navbar-brand fw-bold text-primary">EduTrack QR</span>
-                <button onclick="logout()" class="btn btn-outline-danger btn-sm rounded-pill">ออกจากระบบ</button>
-            </nav>
-            <div class="container pb-5">
-                <div id="content-area"></div>
-            </div>
-        </div>
-    </div>
+// เลือกบทบาทจากหน้าแรก
+function selectRole(role) {
+    console.log("Role Selected:", role);
+    currentSelectedRole = role;
+    
+    const roleView = document.getElementById('role-view');
+    const loginView = document.getElementById('login-view');
+    
+    if(roleView) roleView.style.setProperty('display', 'none', 'important');
+    if(loginView) loginView.style.display = 'block';
+    
+    const badge = document.getElementById('role-badge');
+    if(badge) {
+        badge.innerText = (role === 'Student') ? "สถานะ: นักเรียน" : "สถานะ: ผู้สอน";
+        badge.className = (role === 'Student') ? "badge rounded-pill bg-info text-white px-3 py-2 shadow-sm" : "badge rounded-pill bg-warning text-dark px-3 py-2 shadow-sm";
+    }
+    
+    const title = document.getElementById('login-title');
+    if(title) title.innerText = (role === 'Student') ? "นักเรียน Login" : "ผู้สอน Login";
+}
 
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="script.js"></script>
-</body>
-</html>
+function backToRole() {
+    const roleView = document.getElementById('role-view');
+    const loginView = document.getElementById('login-view');
+    if(roleView) roleView.style.setProperty('display', 'flex', 'important');
+    if(loginView) loginView.style.display = 'none';
+    currentSelectedRole = "";
+}
+
+async function handleLogin() {
+    const user = document.getElementById('username').value;
+    const pass = document.getElementById('password').value;
+
+    if(!user || !pass) {
+        Swal.fire('คำเตือน', 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน', 'warning');
+        return;
+    }
+
+    const res = await apiCall({ action: 'login', user, pass });
+
+    if(res.success) {
+        if(res.role !== currentSelectedRole) {
+            Swal.fire('เข้าสู่ระบบไม่ได้', `บัญชีนี้ไม่มีสิทธิ์ใช้งานในฐานะ ${currentSelectedRole === 'Student' ? 'นักเรียน' : 'ผู้สอน'}`, 'error');
+            return;
+        }
+        auth = res;
+        localStorage.setItem('auth', JSON.stringify(res));
+        initApp();
+    } else {
+        Swal.fire('ล้มเหลว', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'error');
+    }
+}
+
+function initApp() {
+    if(!auth) return;
+    const rv = document.getElementById('role-view');
+    const lv = document.getElementById('login-view');
+    const mv = document.getElementById('main-view');
+    if(rv) rv.style.setProperty('display', 'none', 'important');
+    if(lv) lv.style.display = 'none';
+    if(mv) mv.style.display = 'block';
+    renderMenu();
+}
+
+function renderMenu() {
+    const area = document.getElementById('content-area');
+    if(!area) return;
+    if(auth.role === 'Student') {
+        area.innerHTML = `<div class="row g-4"><div class="col-6"><div class="card-menu bg-grad-blue">เช็คชื่อ</div></div><div class="col-6"><div class="card-menu bg-grad-green">ส่งงาน</div></div></div>`;
+    } else {
+        area.innerHTML = `<div class="row g-4"><div class="col-6"><div class="card-menu bg-grad-orange">จัดการข้อมูล</div></div><div class="col-6"><div class="card-menu bg-grad-blue">สร้าง QR</div></div></div>`;
+    }
+}
+
+function logout() { 
+    localStorage.clear(); 
+    location.reload(); 
+}
+
+window.onload = initApp;
