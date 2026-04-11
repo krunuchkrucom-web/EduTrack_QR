@@ -23,6 +23,37 @@ body {
     text-align: center;
     font-weight: bold;
 }
+
+:root {
+    --primary-blue: #2563eb;
+    --bg-light: #f8fafc;
+    --sidebar-width: 260px;
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+/* Dashboard Cards */
+.stat-card {
+    border: none;
+    border-radius: 1rem;
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+.stat-card:hover { transform: translateY(-5px); }
+
+.bg-grad-blue { background: linear-gradient(135deg, #60a5fa, #2563eb); }
+.bg-grad-green { background: linear-gradient(135deg, #34d399, #059669); }
+.bg-grad-purple { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
+.bg-grad-orange { background: linear-gradient(135deg, #fbbf24, #d97706); }
+
+/* Table Style */
+.table { border-radius: 0.75rem; overflow: hidden; }
+.table thead { background-color: #f1f5f9; }
+
+/* Sidebar Active State */
+#teacher-sidebar .nav-link.active {
+    background-color: var(--primary-blue);
+    color: white !important;
+}
 .card-menu:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
 
 /* สีกราเดียนท์ */
