@@ -62,3 +62,28 @@ body {
     box-shadow: none;
     background-color: #e9ecef !important;
 }
+
+/* ส่วนเนื้อหาภายใน Sub-page */
+#sub-page-content {
+    border: 1px solid #eee;
+    min-height: 200px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ปรับแต่ง Table ให้ดู Simple */
+.table th {
+    font-weight: 700;
+    color: #666;
+    border-top: none;
+}
+
+/* ตกแต่ง Input File ให้เข้ากับ Theme */
+.form-control-sm {
+    border-radius: 10px !important;
+    background-color: #fdfdfd;
+}
