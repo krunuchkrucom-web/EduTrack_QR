@@ -3,67 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Classroom Pro Hub</title>
+    <title>EduTrack QR - Classroom Pro Hub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="app">
-    <div id="role-view" class="container d-flex align-items-center justify-content-center min-vh-100">
-        <div class="text-center">
-            <div class="mb-5">
-                <img src="https://cdn-icons-png.flaticon.com/512/2997/2997313.png" width="100" class="mb-3">
-                <h1 class="fw-bold">EduTrack <span class="text-primary" style="font-style: italic;">QR</span></h1>
-                <p class="text-muted">ระบบจัดการห้องเรียนและเช็คชื่ออัจฉริยะ</p>
-            </div>
-            
-            <div class="row g-4 justify-content-center">
-                <div class="col-11 col-sm-5">
-                    <div class="role-card shadow-sm p-4 bg-white rounded-4 border-0 h-100" onclick="selectRole('Student')">
-                        <div class="icon-box bg-info-light mb-3 mx-auto">
-                            <img src="https://cdn-icons-png.flaticon.com/512/3429/3429433.png" width="60">
-                        </div>
-                        <h4 class="fw-bold">สำหรับนักเรียน</h4>
-                        <p class="small text-muted mb-0">ดูสถิติมาเรียน & ส่งงาน</p>
-                    </div>
-                </div>
-                <div class="col-11 col-sm-5">
-                    <div class="role-card shadow-sm p-4 bg-white rounded-4 border-0 h-100" onclick="selectRole('Teacher')">
-                        <div class="icon-box bg-warning-light mb-3 mx-auto">
-                            <img src="https://cdn-icons-png.flaticon.com/512/906/906175.png" width="60">
-                        </div>
-                        <h4 class="fw-bold">สำหรับผู้สอน</h4>
-                        <p class="small text-muted mb-0">จัดการข้อมูล & ตั้งค่าระบบ</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div id="loader" class="loader-overlay" style="display:none;">
+        <div class="spinner-border text-light" role="status"></div>
     </div>
 
-    <div id="login-view" class="container mt-5" style="display:none;">
-        <div class="text-center mb-4">
-             <button class="btn btn-sm btn-outline-secondary rounded-pill mb-3" onclick="backToRole()">← เปลี่ยนสถานะ</button>
-             <h2 id="login-title" class="fw-bold text-primary">Login</h2>
-             <p id="role-badge" class="badge rounded-pill bg-light text-dark shadow-sm px-3 py-2"></p>
+    <div id="app">
+        <div id="role-view" class="container d-flex align-items-center justify-content-center min-vh-100">
+            <div class="text-center">
+                <div class="mb-5">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2997/2997313.png" width="100" class="mb-3">
+                    <h1 class="fw-bold">EduTrack <span class="text-primary italic">QR</span></h1>
+                    <p class="text-muted">ระบบจัดการห้องเรียนและเช็คชื่ออัจฉริยะ</p>
+                </div>
+                
+                <div class="row g-4 justify-content-center">
+                    <div class="col-11 col-sm-5">
+                        <div class="role-card shadow-sm p-4 bg-white rounded-4 border-0 h-100" onclick="selectRole('Student')">
+                            <div class="icon-box bg-info-light mb-3 mx-auto">
+                                <img src="https://cdn-icons-png.flaticon.com/512/3429/3429433.png" width="60">
+                            </div>
+                            <h4 class="fw-bold text-dark">สำหรับนักเรียน</h4>
+                            <p class="small text-muted mb-0">ดูสถิติมาเรียน & ส่งงาน</p>
+                        </div>
+                    </div>
+                    <div class="col-11 col-sm-5">
+                        <div class="role-card shadow-sm p-4 bg-white rounded-4 border-0 h-100" onclick="selectRole('Teacher')">
+                            <div class="icon-box bg-warning-light mb-3 mx-auto">
+                                <img src="https://cdn-icons-png.flaticon.com/512/906/906175.png" width="60">
+                            </div>
+                            <h4 class="fw-bold text-dark">สำหรับผู้สอน</h4>
+                            <p class="small text-muted mb-0">จัดการข้อมูล & ตั้งค่าระบบ</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="login-card mx-auto shadow-lg p-5 rounded-5 bg-white" style="max-width: 400px;">
-            <div class="mb-3">
-                <label class="form-label small fw-bold">Username</label>
-                <input type="text" id="username" class="form-control rounded-pill border-0 bg-light px-3" placeholder="กรอกชื่อผู้ใช้">
+
+        <div id="login-view" class="container mt-5" style="display:none;">
+            <div class="text-center mb-4">
+                 <button class="btn btn-sm btn-outline-secondary rounded-pill mb-3" onclick="backToRole()">← เปลี่ยนสถานะ</button>
+                 <h2 id="login-title" class="fw-bold text-primary">เข้าสู่ระบบ</h2>
+                 <p id="role-badge" class="badge rounded-pill shadow-sm px-3 py-2"></p>
             </div>
-            <div class="mb-4">
-                <label class="form-label small fw-bold">Password</label>
-                <input type="password" id="password" class="form-control rounded-pill border-0 bg-light px-3" placeholder="กรอกรหัสผ่าน">
+            <div class="login-card mx-auto shadow-lg p-5 rounded-5 bg-white" style="max-width: 400px;">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Username</label>
+                    <input type="text" id="username" class="form-control rounded-pill border-0 bg-light px-3" placeholder="กรอกชื่อผู้ใช้">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Password</label>
+                    <input type="password" id="password" class="form-control rounded-pill border-0 bg-light px-3" placeholder="กรอกรหัสผ่าน">
+                </div>
+                <button onclick="handleLogin()" class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow">เข้าสู่ระบบ</button>
             </div>
-            <button onclick="handleLogin()" class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow">เข้าสู่ระบบ</button>
+        </div>
+        
+        <div id="main-view" style="display:none;">
+            <nav class="navbar shadow-sm mb-4 px-3 sticky-top bg-white">
+                <span class="navbar-brand fw-bold text-primary">EduTrack QR</span>
+                <button onclick="logout()" class="btn btn-outline-danger btn-sm rounded-pill">ออกจากระบบ</button>
+            </nav>
+            <div class="container pb-5">
+                <div id="content-area"></div>
+            </div>
         </div>
     </div>
-    
-    <div id="main-view" style="display:none;">
-        <div id="content-area"></div>
-    </div>
-</div>
 
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
