@@ -172,6 +172,159 @@ function renderMenu() {
     }
 }
 
+// 1. หน้าเช็คชื่อและประวัติการมาเรียน
+function showAttendanceView() {
+    openSubPage("เช็คชื่อ & ประวัติการเข้าเรียน");
+    document.getElementById('sub-page-content').innerHTML = `
+        <div class="text-center mb-4">
+            <button class="btn btn-primary btn-lg rounded-pill px-5 shadow" onclick="startQRScanner()">
+                📸 สแกน QR เช็คชื่อ
+            </button>
+        </div>
+        <h6 class="fw-bold mb-3">ประวัติการเข้าเรียนล่าสุด</h6>
+        <div class="table-responsive">
+            <table class="table table-sm small">
+                <thead>
+                    <tr class="table-light">
+                        <th>วันที่</th>
+                        <th>เวลา</th>
+                        <th>สถานะ</th>
+                    </tr>
+                </thead>
+                <tbody id="attendance-list">
+                    <tr><td>11/04/2026</td><td>08:30</td><td><span class="badge bg-success">มาเรียน</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// 2. หน้าดูใบงานและส่งงาน (PDF/JPG)
+function showAssignmentView() {
+    openSubPage("ใบงาน & แบบฝึกหัด");
+    document.getElementById('sub-page-content').innerHTML = `
+        <div class="list-group list-group-flush">
+            <div class="list-group-item border-0 px-0 mb-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="fw-bold">ใบงานที่ 1: พื้นฐานคอมพิวเตอร์</div>
+                        <div class="small text-muted">กำหนดส่ง: 15 เม.ย. 2569</div>
+                    </div>
+                    <span class="badge bg-warning text-dark">ยังไม่ได้ส่ง</span>
+                </div>
+                <div class="mt-2">
+                    <input type="file" id="fileInput" class="form-control form-control-sm mb-2" accept=".pdf,.jpg,.jpeg">
+                    <button class="btn btn-sm btn-outline-primary w-100 rounded-pill" onclick="uploadFile()">ส่งไฟล์งาน (.pdf / .jpg)</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// 3. หน้าดูรายงานคะแนน
+function showReportView() {
+    openSubPage("รายงานคะแนนสะสม");
+    document.getElementById('sub-page-content').innerHTML = `
+        <div class="p-3 bg-light rounded-3 mb-3 text-center">
+            <div class="small text-muted">คะแนนรวมทั้งหมด</div>
+            <div class="display-6 fw-bold text-primary">85 / 100</div>
+        </div>
+        <h6 class="fw-bold">รายละเอียดคะแนน</h6>
+        <ul class="list-group list-group-flush small">
+            <li class="list-group-item d-flex justify-content-between">
+                <span>เช็คชื่อเข้าเรียน</span>
+                <span class="fw-bold">20/20</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span>ใบงานที่ 1</span>
+                <span class="fw-bold">10/10</span>
+            </li>
+        </ul>
+    `;
+}
+
+// ฟังก์ชันควบคุม UI
+function openSubPage(title) {
+    document.getElementById('sub-page-container').style.display = 'block';
+    document.getElementById('sub-page-title').innerText = title;
+    window.scrollTo({ top: document.getElementById('sub-page-container').offsetTop - 100, behavior: 'smooth' });
+}
+
+function closeSubPage() {
+    document.getElementById('sub-page-container').style.display = 'none';
+}
+
+// --- 1. จัดการรายวิชา ---
+function showSubjectManager() {
+    openSubPage("จัดการรายวิชา (Subject Manager)");
+    document.getElementById('sub-page-content').innerHTML = `
+        <button class="btn btn-success btn-sm mb-3" onclick="addSubjectForm()">+ เพิ่มรายวิชาใหม่</button>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle small">
+                <thead class="table-light">
+                    <tr><th>รหัสวิชา</th><th>ชื่อวิชา</th><th>จัดการ</th></tr>
+                </thead>
+                <tbody id="subject-list">
+                    </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// --- 2. จัดการใบงาน/แบบทดสอบ และคะแนน ---
+function showAssignmentManager() {
+    openSubPage("จัดการใบงาน & คะแนน");
+    document.getElementById('sub-page-content').innerHTML = `
+        <div class="mb-4">
+            <label class="form-label small fw-bold">เลือกรายวิชาเพื่อจัดการงาน:</label>
+            <select class="form-select form-select-sm mb-3" onchange="loadAssignments(this.value)">
+                <option value="">-- เลือกวิชา --</option>
+                <option value="CS101">วิทยาการคำนวณ</option>
+            </select>
+        </div>
+        <div id="assignment-list-area"></div>
+    `;
+}
+
+// --- 3. รายงานสรุปผล และ Export ---
+function showReportDashboard() {
+    openSubPage("สรุปรายงานและการส่งออกข้อมูล");
+    document.getElementById('sub-page-content').innerHTML = `
+        <div class="row g-2 mb-4">
+            <div class="col-6">
+                <button class="btn btn-outline-success w-100 btn-sm" onclick="exportToExcel()">📊 Export to Excel</button>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-outline-danger w-100 btn-sm" onclick="exportToPDF()">📑 Export to PDF</button>
+            </div>
+        </div>
+        <h6 class="fw-bold mb-3">สรุปเวลาเรียนรายบุคคล (รายเดือน)</h6>
+        <div id="report-summary" class="small text-muted">เลือกนักเรียนเพื่อดูรายละเอียด...</div>
+    `;
+}
+
+// ฟังก์ชันสแกน QR สำหรับครู (เช็คชื่อเข้าเรียน)
+function showTeacherAttendance() {
+    openSubPage("สแกนเช็คชื่อนักเรียน");
+    document.getElementById('sub-page-content').innerHTML = `
+        <div id="reader" style="width:100%"></div>
+        <p class="text-center mt-3 text-muted small">วางคิวอาร์โค้ดของนักเรียนในกรอบเพื่อเช็คชื่อ</p>
+    `;
+    startScanner(); // เรียกใช้งาน html5-qrcode
+}
+
+// ฟังก์ชันเปิด/ปิดหน้าย่อย (เหมือนของนักเรียน)
+function openSubPage(title) {
+    document.getElementById('sub-page-container').style.display = 'block';
+    document.getElementById('sub-page-title').innerText = title;
+    window.scrollTo({ top: document.getElementById('sub-page-container').offsetTop - 50, behavior: 'smooth' });
+}
+
+function closeSubPage() {
+    document.getElementById('sub-page-container').style.display = 'none';
+}
+
+
 function logout() { 
     localStorage.clear(); 
     location.reload(); 
