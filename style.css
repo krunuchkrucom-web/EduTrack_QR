@@ -1,175 +1,73 @@
 body { 
     font-family: 'Sarabun', sans-serif; 
-    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
-    min-height: 100vh;
-    margin: 0;
+    background-color: #f8fafc; 
+    color: #1e293b;
 }
 
-.loader-overlay { 
+/* Loader */
+.loader-overlay {
     position: fixed; top:0; left:0; width:100%; height:100%; 
-    background: rgba(0,0,0,0.7); z-index:9999; 
-    display: flex; justify-content: center; align-items: center; 
+    background: rgba(0,0,0,0.6); z-index: 9999; 
+    display: flex; align-items: center; justify-content: center;
 }
 
-/* Card เมนูหน้าหลัก */
-.card-menu {
-    border: none;
-    border-radius: 20px;
-    padding: 25px;
-    color: white;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    transition: 0.3s;
-    cursor: pointer;
-    text-align: center;
-    font-weight: bold;
-}
-
-:root {
-    --primary-blue: #2563eb;
-    --bg-light: #f8fafc;
-    --sidebar-width: 260px;
-    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-}
-
-/* Dashboard Cards */
-.stat-card {
-    border: none;
-    border-radius: 1rem;
-    transition: transform 0.2s;
-    cursor: pointer;
-}
-.stat-card:hover { transform: translateY(-5px); }
-
-.bg-grad-blue { background: linear-gradient(135deg, #60a5fa, #2563eb); }
-.bg-grad-green { background: linear-gradient(135deg, #34d399, #059669); }
-.bg-grad-purple { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
-.bg-grad-orange { background: linear-gradient(135deg, #fbbf24, #d97706); }
-
-/* Table Style */
-.table { border-radius: 0.75rem; overflow: hidden; }
-.table thead { background-color: #f1f5f9; }
-
-/* Sidebar Active State */
-#teacher-sidebar .nav-link.active {
-    background-color: var(--primary-blue);
-    color: white !important;
-}
-.card-menu:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
-
-/* สีกราเดียนท์ */
-.bg-grad-blue { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-.bg-grad-green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-.bg-grad-orange { background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%); }
-.bg-grad-purple { background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
-
-/* Landing Page Cards */
+/* Role Selection Cards */
 .role-card {
-    transition: all 0.3s ease;
     cursor: pointer;
+    transition: 0.3s;
     border: 2px solid transparent !important;
 }
 .role-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
-    border-color: #0d6efd !important;
+    border-color: #2563eb !important;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(37,99,235,0.1) !important;
 }
 
-.icon-box {
-    width: 100px;
-    height: 100px;
-    border-radius: 30px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.bg-info-light { background-color: #e3f2fd; }
-.bg-warning-light { background-color: #fff3e0; }
-.italic { font-style: italic; color: #0d6efd; }
-
-/* Login Card */
-.login-card { border-bottom: 5px solid #0d6efd; }
-.form-control:focus {
-    box-shadow: none;
-    background-color: #e9ecef !important;
-}
-
-/* ส่วนเนื้อหาภายใน Sub-page */
-#sub-page-content {
-    border: 1px solid #eee;
-    min-height: 200px;
-    animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* ปรับแต่ง Table ให้ดู Simple */
-.table th {
-    font-weight: 700;
-    color: #666;
-    border-top: none;
-}
-
-/* ตกแต่ง Input File ให้เข้ากับ Theme */
-.form-control-sm {
-    border-radius: 10px !important;
-    background-color: #fdfdfd;
-}
-
-/* --- ส่วนเพิ่มเติมสำหรับ Layout ฝั่งครู (เหมือนภาพที่ 2) --- */
-.teacher-container {
-    height: 100vh;
-}
-
+/* Sidebar Customization */
 #teacher-sidebar .nav-link {
-    transition: 0.2s;
+    color: #64748b;
+    padding: 12px 20px;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+#teacher-sidebar .nav-link.active {
+    background-color: #2563eb;
+    color: white;
 }
 
-#teacher-sidebar .nav-link:not(.active):hover {
-    background-color: #f8f9fa;
-    color: #0d6efd !important;
+/* Stat Cards (Pastel Colors like the Image) */
+.bg-light-blue { background-color: #eef2ff; color: #4338ca; cursor: pointer; transition: 0.2s; }
+.bg-light-green { background-color: #ecfdf5; color: #059669; cursor: pointer; transition: 0.2s; }
+.bg-light-purple { background-color: #faf5ff; color: #7c3aed; cursor: pointer; transition: 0.2s; }
+
+.stat-card-v2:hover {
+    transform: scale(1.02);
 }
 
-/* ทำให้ Sidebar ยุบได้เวลาจอเล็ก */
+/* Table Style */
+.table {
+    border-collapse: separate;
+    border-spacing: 0 8px;
+}
+.table thead th {
+    border-bottom: none;
+    color: #64748b;
+    font-weight: 600;
+}
+.table tbody tr {
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border-radius: 10px;
+}
+
+/* Sidebar Toggle for Mobile */
 @media (max-width: 768px) {
     #teacher-sidebar {
-        margin-left: -250px;
         position: fixed;
-        z-index: 1050;
+        left: -260px;
         transition: 0.3s;
     }
     #teacher-sidebar.toggled {
-        margin-left: 0;
+        left: 0;
     }
-}
-
-/* ตกแต่ง Card ใน Dashboard ให้ดูสวยงาม (เหมือนภาพที่ 2) */
-.stat-card {
-    border: none;
-    border-radius: 15px;
-    transition: transform 0.2s;
-}
-.stat-card:hover {
-    transform: translateY(-5px);
-}
-
-.bg-grad-info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-.bg-grad-success { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
-.bg-grad-warning { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
-
-.class-btn {
-    transition: 0.2s;
-    opacity: 0.8;
-}
-.class-btn:hover, .class-btn.active {
-    transform: scale(1.05);
-    opacity: 1;
-    font-weight: bold;
-}
-
-.extra-small {
-    font-size: 0.8rem;
 }
