@@ -17,8 +17,9 @@
                 <small class="text-muted">Smart Attendance</small>
             </div>
             <ul class="nav nav-pills flex-column px-2 gap-2">
-                <li class="nav-item"><a href="#" class="nav-link active py-3" onclick="showDashboard()"><i class="fa-solid fa-users-gear me-2"></i> จัดการนักเรียน</a></li>
-                <li class="nav-item"><a href="#" class="nav-link text-dark py-3" onclick="showCreateQR()"><i class="fa-solid fa-qrcode me-2"></i> สร้าง QR</a></li>
+                <li class="nav-item"><a href="#" class="nav-link active py-3"><i class="fa-solid fa-users-gear me-2"></i> จัดการนักเรียน</a></li>
+                <li class="nav-item"><a href="#" class="nav-link text-dark py-3"><i class="fa-solid fa-camera-retro me-2"></i> สแกนเข้าเรียน/ส่งงาน</a></li>
+                <li class="nav-item"><a href="#" class="nav-link text-dark py-3"><i class="fa-solid fa-qrcode me-2"></i> สร้าง QR</a></li>
                 <li class="nav-item"><a href="#" class="nav-link text-dark py-3"><i class="fa-solid fa-chart-pie me-2"></i> สรุปผลการเข้าเรียน</a></li>
                 <li class="nav-item mt-5"><a href="#" class="nav-link text-danger py-3" onclick="logout()"><i class="fa-solid fa-power-off me-2"></i> ออกจากระบบ</a></li>
             </ul>
@@ -27,85 +28,76 @@
         <main class="flex-grow-1">
             <header class="navbar bg-white p-3 shadow-sm sticky-top">
                 <div class="container-fluid">
-                    <h5 class="fw-bold mb-0">ยินดีต้อนรับ, <span id="teacher-name">...</span> 👋</h5>
-                    <div id="teacher-profile-top" class="d-flex align-items-center">
-                        </div>
+                    <h5 class="fw-bold mb-0">ยินดีต้อนรับ, <span id="teacher-name-display">...</span> 👋</h5>
                 </div>
             </header>
 
-            <div class="p-4" id="content-area">
+            <div class="p-4">
                 <div class="row g-4 mb-4">
-                    <div class="col-md-4">
-                        <div class="card p-4 border-0 shadow-sm rounded-4 text-white card-action" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="startScanner()">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-white bg-opacity-25 p-3 rounded-circle me-3"><i class="fa-solid fa-camera-retro fs-3"></i></div>
-                                <div><h5 class="mb-0 fw-bold">สแกนเข้าเรียน</h5><small>เริ่มสแกน QR Code</small></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card p-4 border-0 shadow-sm rounded-4 text-white card-action" style="background: linear-gradient(135deg, #10b981, #047857);" onclick="studentModal('add')">
+                    <div class="col-md-6">
+                        <div class="card p-4 border-0 shadow-sm rounded-4 text-white card-action" style="background: linear-gradient(135deg, #10b981, #047857);" onclick="openStudentModal()">
                             <div class="d-flex align-items-center">
                                 <div class="bg-white bg-opacity-25 p-3 rounded-circle me-3"><i class="fa-solid fa-user-plus fs-3"></i></div>
-                                <div><h5 class="mb-0 fw-bold">เพิ่มนักเรียน</h5><small>ลงทะเบียนนักเรียนใหม่</small></div>
+                                <div><h5 class="mb-0 fw-bold">เพิ่มนักเรียน</h5><small>ลงทะเบียนนักเรียนใหม่ในห้องที่เลือก</small></div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card p-4 border-0 shadow-sm rounded-4 text-white card-action" style="background: linear-gradient(135deg, #f59e0b, #d97706);" onclick="manageRoomModal()">
+                    <div class="col-md-6">
+                        <div class="card p-4 border-0 shadow-sm rounded-4 text-white card-action" style="background: linear-gradient(135deg, #f59e0b, #d97706);" onclick="openRoomModal()">
                             <div class="d-flex align-items-center">
                                 <div class="bg-white bg-opacity-25 p-3 rounded-circle me-3"><i class="fa-solid fa-folder-plus fs-3"></i></div>
-                                <div><h5 class="mb-0 fw-bold">เพิ่มห้องเรียน</h5><small>จัดการรายวิชาและห้อง</small></div>
+                                <div><h5 class="mb-0 fw-bold">เพิ่มห้องเรียน</h5><small>จัดการกลุ่มเรียนใหม่</small></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="row">
-                    <div class="col-lg-8">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="fw-bold mb-0">เลือกห้องเรียน</h6>
-                            <button class="btn btn-sm btn-link text-decoration-none" onclick="manageRoomModal()">+ แก้ไขห้องเรียน</button>
-                        </div>
+                    <div class="col-lg-12">
+                        <h6 class="fw-bold mb-3">เลือกห้องเรียน</h6>
                         <div class="row g-3 mb-4" id="room-selection-area">
                             </div>
 
                         <div class="card border-0 shadow-sm rounded-4 p-4">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="fw-bold mb-0">ห้องเรียน: <span id="current-room-display">ปวช.1/1</span></h5>
-                                <div class="btn-group shadow-sm rounded-pill">
-                                    <button class="btn btn-primary px-3 btn-sm" onclick="startScanner()"><i class="fa-solid fa-expand me-1"></i> สแกน</button>
-                                    <button class="btn btn-success px-3 btn-sm" onclick="studentModal('add')"><i class="fa-solid fa-plus me-1"></i> เพิ่ม</button>
-                                </div>
+                                <h5 class="fw-bold mb-0">รายชื่อนักเรียน: <span id="current-room-display">กรุณาเลือกห้อง</span></h5>
                             </div>
                             <div class="table-responsive">
                                 <table class="table align-middle">
                                     <thead class="table-light">
-                                        <tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>สถานะ</th><th>จัดการ</th></tr>
+                                        <tr>
+                                            <th>ลำดับ</th>
+                                            <th>รหัส</th>
+                                            <th>รูป</th>
+                                            <th>ชื่อ-นามสกุล</th>
+                                            <th>สถานะ</th>
+                                            <th>จัดการ</th>
+                                        </tr>
                                     </thead>
-                                    <tbody id="student-list-table">
-                                        </tbody>
+                                    <tbody id="student-list-table"></tbody>
                                 </table>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4">
-                        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
-                            <h6 class="fw-bold">สรุปภาพรวมวันนี้</h6>
-                            <div class="text-center py-4">
-                                <h2 class="text-primary display-5 fw-bold">158</h2>
-                                <p class="text-muted small">คนเข้าเรียนทั้งหมด</p>
-                            </div>
-                        </div>
-                        <div class="card border-0 shadow-sm rounded-4 p-4">
-                            <h6 class="fw-bold mb-3">กิจกรรมล่าสุด</h6>
-                            <div id="activity-log" class="small text-muted">กำลังโหลดกิจกรรม...</div>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
+    </div>
+
+    <div class="modal fade" id="studentModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-header border-0"><h5 class="fw-bold">เพิ่มนักเรียนใหม่</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="small">รหัสนักเรียน</label><input type="text" id="m-id" class="form-control rounded-pill"></div>
+                    <div class="mb-3"><label class="small">ชื่อ-นามสกุล</label><input type="text" id="m-name" class="form-control rounded-pill"></div>
+                    <div class="mb-3"><label class="small">URL รูปภาพนักเรียน</label><input type="text" id="m-photo" class="form-control rounded-pill" placeholder="https://..."></div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button class="btn btn-primary w-100 rounded-pill" onclick="validateAndSaveStudent()">บันทึกข้อมูล</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="modal fade" id="roomModal" tabindex="-1">
