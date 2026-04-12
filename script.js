@@ -1,121 +1,122 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwHV8K0Me5It_ePtkt4EhEnFPzypA6Rdpl-zmpU-vABr2fTeFYQGI8DZSppXSggnuPbtw/exec";
 let auth = JSON.parse(localStorage.getItem('auth')) || null;
+let currentSelectedRole = ""; 
 
-// --- 1. ระบบจัดการสถานะเริ่มต้น ---
-window.onload = () => {
-    if (auth) {
-        initApp();
-    } else {
-        // หากไม่มีข้อมูล Login ให้กลับไปหน้าเลือกบทบาท
-        document.getElementById('role-view').style.setProperty('display', 'flex', 'important');
-        document.getElementById('login-view').style.setProperty('display', 'none', 'important');
-        document.getElementById('main-view').style.display = 'none';
+// --- 1. ฟังก์ชันเลือกบทบาท (แก้ไขจุดที่กดไม่ได้) ---
+function selectRole(role) {
+    currentSelectedRole = role;
+    // ซ่อนหน้าแรก และแสดงหน้า Login
+    document.getElementById('role-view').style.setProperty('display', 'none', 'important');
+    document.getElementById('login-view').style.setProperty('display', 'flex', 'important');
+    
+    const badge = document.getElementById('role-badge');
+    if (badge) {
+        badge.innerText = (role === 'Student') ? "สถานะ: นักเรียน" : "สถานะ: ผู้สอน";
+        badge.className = (role === 'Student') ? "badge rounded-pill bg-info text-white px-3 py-2 shadow-sm" : "badge rounded-pill bg-warning text-dark px-3 py-2 shadow-sm";
     }
-};
+}
 
-// --- 2. ฟังก์ชันหลักในการรันแอป ---
+function backToRole() {
+    document.getElementById('role-view').style.setProperty('display', 'flex', 'important');
+    document.getElementById('login-view').style.setProperty('display', 'none', 'important');
+}
+
+// --- 2. ระบบ API และ Login ---
+async function handleLogin() {
+    const user = document.getElementById('username').value;
+    const pass = document.getElementById('password').value;
+    if (!user || !pass) {
+        Swal.fire('คำเตือน', 'กรุณากรอกข้อมูลให้ครบ', 'warning');
+        return;
+    }
+    
+    // แสดง Loader
+    document.getElementById('loader').style.display = 'flex';
+    
+    try {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', user, pass }) });
+        const json = await res.json();
+        
+        document.getElementById('loader').style.display = 'none';
+        
+        if (json.success) {
+            if (json.role !== currentSelectedRole) {
+                Swal.fire('ผิดพลาด', `บัญชีนี้ไม่ใช่สิทธิ์ ${currentSelectedRole}`, 'error');
+                return;
+            }
+            auth = json;
+            localStorage.setItem('auth', JSON.stringify(json));
+            initApp();
+        } else {
+            Swal.fire('ล้มเหลว', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'error');
+        }
+    } catch (err) {
+        document.getElementById('loader').style.display = 'none';
+        Swal.fire('Error', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
+    }
+}
+
+// --- 3. เริ่มต้นแอปและ Render Dashboard ---
 function initApp() {
     if (!auth) return;
-
-    // ซ่อนหน้า Login และแสดงหน้าหลัก
     document.getElementById('role-view').style.display = 'none';
     document.getElementById('login-view').style.display = 'none';
     document.getElementById('main-view').style.display = 'block';
 
-    // แสดงชื่อผู้ใช้ (แก้ไขจุดที่ขึ้น undefined)
     const userDisplay = document.getElementById('user-display-name');
     if (userDisplay) {
-        userDisplay.innerHTML = `
-            <div class="fw-bold text-dark">${auth.name || 'ผู้ใช้งาน'}</div>
-            <div class="text-muted small">${auth.role === 'Teacher' ? 'ครูผู้สอน' : 'นักเรียน: ' + (auth.user || '')}</div>
-        `;
+        userDisplay.innerHTML = `<div class="fw-bold">${auth.name}</div><small class="text-muted">${auth.role}</small>`;
     }
-
-    // จัดการ Sidebar ตามบทบาท
-    const sidebar = document.getElementById('teacher-sidebar');
-    if (auth.role === 'Student') {
-        if (sidebar) sidebar.style.display = 'none';
-        document.getElementById('main-content-area').style.width = '100%';
-    }
-
     renderMenu();
 }
 
-// --- 3. ฟังก์ชัน Render หน้าจอตามรูปภาพที่คุณครูต้องการ ---
 function renderMenu() {
     const area = document.getElementById('content-area');
-    if (!area) return;
-
     if (auth.role === 'Teacher') {
-        // โครงสร้าง Dashboard ครูแบบใหม่ตามรูปภาพ (ภาพที่ 4)
+        // โครงสร้างหน้าผู้สอนแบบในรูป (Dashboard 8:4)
         area.innerHTML = `
             <div class="row g-3 mb-4">
-                <div class="col-md-4"><div class="stat-card-v2 bg-light-blue p-3 d-flex align-items-center rounded-4 shadow-sm" onclick="showCreateQR()">
-                    <div class="bg-primary text-white p-3 rounded-4 me-3">📸</div>
-                    <div><h6 class="mb-0 fw-bold">สแกนเข้าเรียน</h6><small class="text-muted">เริ่มสแกน QR Code</small></div>
-                </div></div>
-                <div class="col-md-4"><div class="stat-card-v2 bg-light-green p-3 d-flex align-items-center rounded-4 shadow-sm">
-                    <div class="bg-success text-white p-3 rounded-4 me-3">👤</div>
-                    <div><h6 class="mb-0 fw-bold">เพิ่มนักเรียน</h6><small class="text-muted">ลงทะเบียนนักเรียนใหม่</small></div>
-                </div></div>
-                <div class="col-md-4"><div class="stat-card-v2 bg-light-purple p-3 d-flex align-items-center rounded-4 shadow-sm" onclick="showHistory()">
-                    <div class="bg-warning text-white p-3 rounded-4 me-3">📊</div>
-                    <div><h6 class="mb-0 fw-bold">ดูรายงาน</h6><small class="text-muted">สรุปข้อมูลการเข้าเรียน</small></div>
-                </div></div>
+                <div class="col-md-4"><div class="card p-3 border-0 shadow-sm bg-light-blue rounded-4" onclick="showCreateQR()">📸 <b>สแกนเข้าเรียน</b></div></div>
+                <div class="col-md-4"><div class="card p-3 border-0 shadow-sm bg-light-green rounded-4">👤 <b>เพิ่มนักเรียน</b></div></div>
+                <div class="col-md-4"><div class="card p-3 border-0 shadow-sm bg-light-purple rounded-4">📊 <b>ดูรายงาน</b></div></div>
             </div>
-
             <div class="row g-4">
                 <div class="col-lg-8">
-                    <div class="card border-0 rounded-5 shadow-sm p-4 mb-4">
-                        <div class="d-flex justify-content-between mb-3">
-                            <h5 class="fw-bold">เลือกห้องเรียน</h5>
-                            <button class="btn btn-sm btn-outline-primary">+ เพิ่มห้องเรียน</button>
+                    <div class="card p-4 border-0 shadow-sm rounded-4">
+                        <div class="d-flex justify-content-between mb-3"><h5>เลือกห้องเรียน</h5></div>
+                        <div class="d-flex gap-2 mb-4">
+                            <button class="btn btn-primary rounded-3 px-4" onclick="loadClassRoom('ปวช.1/1')">ปวช.1/1</button>
+                            <button class="btn btn-outline-secondary rounded-3 px-4" onclick="loadClassRoom('ปวช.1/2')">ปวช.1/2</button>
                         </div>
-                        <div class="d-flex gap-2 flex-wrap mb-4">
-                            <button class="btn btn-primary rounded-4 px-4 py-3" onclick="loadClassRoom('ปวช.1/1', this)">ปวช.1/1<br><small>32 คน</small></button>
-                            <button class="btn btn-outline-secondary border-0 bg-light rounded-4 px-4 py-3" onclick="loadClassRoom('ปวช.1/2', this)">ปวช.1/2<br><small>28 คน</small></button>
-                        </div>
-                        <div id="student-list-container" class="table-responsive">
-                            <table class="table table-hover">
-                                <thead class="table-light"><tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
-                                <tbody id="student-list-area"></tbody>
-                            </table>
-                        </div>
+                        <table class="table align-middle">
+                            <thead class="table-light"><tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+                            <tbody id="student-list-area"></tbody>
+                        </table>
                     </div>
                 </div>
                 <div class="col-lg-4">
-                    <div class="card border-0 rounded-5 shadow-sm p-4 mb-4">
-                        <h6 class="fw-bold mb-3">สรุปภาพรวมวันนี้</h6>
-                        <div class="text-center py-3">
-                            <h2 class="fw-bold text-primary">158</h2>
-                            <p class="text-muted">จำนวนนักเรียนทั้งหมด</p>
-                        </div>
+                    <div class="card p-4 border-0 shadow-sm rounded-4 text-center">
+                        <h6>สรุปภาพรวมวันนี้</h6>
+                        <h2 class="text-primary fw-bold">158</h2>
+                        <p class="small text-muted">คน</p>
                     </div>
                 </div>
             </div>`;
-        loadClassRoom('ปวช.1/1'); 
+        loadClassRoom('ปวช.1/1');
     } else {
-        // เมนูสำหรับนักเรียน
-        area.innerHTML = `
-            <div class="row g-3">
-                <div class="col-12 col-md-6"><div class="card-menu bg-grad-blue p-4 text-center rounded-4 text-white shadow-sm" onclick="alert('กำลังพัฒนา')">📅 เช็คชื่อเข้าเรียน</div></div>
-                <div class="col-12 col-md-6"><div class="card-menu bg-grad-green p-4 text-center rounded-4 text-white shadow-sm" onclick="alert('กำลังพัฒนา')">📝 ใบงาน & ส่งงาน</div></div>
-            </div>`;
+        area.innerHTML = `<h4>ยินดีต้อนรับนักเรียน</h4>`;
     }
 }
 
-// --- ฟังก์ชันเสริมอื่นๆ ---
+async function loadClassRoom(room) {
+    const tbody = document.getElementById('student-list-area');
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center">กำลังโหลด...</td></tr>';
+    // ส่วนนี้จะดึงข้อมูลจริงจาก Google Sheets
+}
+
 function logout() {
-    localStorage.removeItem('auth');
+    localStorage.clear();
     location.reload();
 }
 
-async function apiCall(data) {
-    try {
-        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
-        return await res.json();
-    } catch (err) {
-        console.error(err);
-        return { success: false };
-    }
-}
+window.onload = () => { if(auth) initApp(); };
