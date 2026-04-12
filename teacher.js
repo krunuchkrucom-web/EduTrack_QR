@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzzyo9foeyhXfOrqmLEW6-wgLAyArbdSTk37yxfhqrxNPSjt1huu3K6QU96QDW8TXcMmw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxP03uMyphO0QFk-zLBPlE9sXs1XQklyNv0Oe8WiVxRuF0V6oAhzym8TKGj1G-92CzHjg/exec";
 let currentRoom = "";
 
 // โหลดข้อมูลเมื่อเปิดหน้าเว็บ
