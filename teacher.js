@@ -1,138 +1,83 @@
-// 1. ตรวจสอบสิทธิ์ทันที
-const auth = JSON.parse(localStorage.getItem('auth'));
-if (!auth || auth.role !== 'Teacher') {
-    window.location.href = 'index.html'; 
-}
-
-// 2. เมื่อโหลดหน้า
-window.onload = () => {
-    // แสดงชื่อครูที่มุมขวาบน
-    document.getElementById('user-display-area').innerHTML = `
-        <div class="fw-bold text-dark">${auth.name}</div>
-        <small class="text-muted">ครูผู้สอน</small>
-    `;
-    showDashboard(); // เริ่มต้นที่หน้า Dashboard
-};
-
-// 3. ฟังก์ชันหน้าหลัก (Dashboard)
 function showDashboard() {
-    updateMenu('menu-dash');
-    document.getElementById('header-title').innerText = "ระบบจัดการชั้นเรียน";
     const area = document.getElementById('content-area');
-    
     area.innerHTML = `
-        <div class="row g-4">
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="card p-4 border-0 shadow-sm rounded-4 text-white" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-white bg-opacity-25 p-3 rounded-circle me-3"><i class="fa-solid fa-camera fs-3"></i></div>
+                        <div><h5 class="mb-0 fw-bold">สแกนเข้าเรียน</h5><small>เริ่มสแกน QR Code</small></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4 border-0 shadow-sm rounded-4 text-white" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-white bg-opacity-25 p-3 rounded-circle me-3"><i class="fa-solid fa-user-plus fs-3"></i></div>
+                        <div><h5 class="mb-0 fw-bold">เพิ่มนักเรียน</h5><small>ลงทะเบียนนักเรียนใหม่</small></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-4 border-0 shadow-sm rounded-4 text-white" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-white bg-opacity-25 p-3 rounded-circle me-3"><i class="fa-solid fa-chart-pie fs-3"></i></div>
+                        <div><h5 class="mb-0 fw-bold">ดูรายงาน</h5><small>สรุปข้อมูลการเข้าเรียน</small></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
             <div class="col-lg-8">
-                <div class="card p-4 border-0 shadow-sm rounded-4">
-                    <h5 class="fw-bold mb-3">รายชื่อนักเรียน</h5>
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <thead class="table-light">
-                                <tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>สถานะ</th><th>จัดการ</th></tr>
-                            </thead>
-                            <tbody id="student-list-area">
-                                </tbody>
-                        </table>
+                <h6 class="fw-bold mb-3">เลือกห้องเรียน</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3"><button class="btn btn-primary w-100 p-3 rounded-4 shadow-sm fw-bold">ปวช.1/1<br><small class="fw-normal">32 คน</small></button></div>
+                    <div class="col-md-3"><button class="btn btn-success w-100 p-3 rounded-4 shadow-sm fw-bold">ปวช.1/2<br><small class="fw-normal">28 คน</small></button></div>
+                    <div class="col-md-3"><button class="btn btn-warning w-100 p-3 rounded-4 shadow-sm fw-bold text-white">ปวช.3/5<br><small class="fw-normal">30 คน</small></button></div>
+                    <div class="col-md-3"><button class="btn btn-danger w-100 p-3 rounded-4 shadow-sm fw-bold">ปวช.3/1<br><small class="fw-normal">25 คน</small></button></div>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold mb-0">ห้องเรียน: ปวช.1/1 <span class="badge bg-light text-primary rounded-pill">32 คน</span></h5>
+                        <div>
+                            <button class="btn btn-primary btn-sm rounded-pill px-3"><i class="fa-solid fa-camera me-1"></i> สแกนเข้าเรียน</button>
+                            <button class="btn btn-success btn-sm rounded-pill px-3"><i class="fa-solid fa-plus me-1"></i> เพิ่มนักเรียน</button>
+                        </div>
                     </div>
+                    <table class="table align-middle">
+                        <thead class="table-light">
+                            <tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>USERNAME</th><th>สถานะ</th><th>จัดการ</th></tr>
+                        </thead>
+                        <tbody id="student-list-area">
+                            <tr><td>S001</td><td>นายกิตติพงษ์ ใจดี</td><td>S001</td><td><span class="text-success">● มาเรียน</span></td><td><i class="fa-solid fa-pen-to-square text-primary me-2"></i><i class="fa-solid fa-trash text-danger"></i></td></tr>
+                            <tr><td>S002</td><td>สมศักดิ์ มีเกียรติ</td><td>S002</td><td><span class="text-success">● มาเรียน</span></td><td><i class="fa-solid fa-pen-to-square text-primary me-2"></i><i class="fa-solid fa-trash text-danger"></i></td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
+
             <div class="col-lg-4">
-                <div class="card p-4 border-0 shadow-sm rounded-4 text-center">
-                    <h6 class="text-muted">สถิติวันนี้</h6>
-                    <h2 class="text-primary display-5 fw-bold">158</h2>
-                    <p class="small">คนเข้าเรียนทั้งหมด</p>
-                </div>
-            </div>
-        </div>
-    `;
-    loadClassRoom('ปวช.1/1');
-}
-
-// 4. ฟังก์ชันหน้าสร้าง QR
-function showCreateQR() {
-    updateMenu('menu-qr');
-    document.getElementById('header-title').innerText = "สร้าง QR Code รายบุคคล";
-    const area = document.getElementById('content-area');
-    
-    area.innerHTML = `
-        <div class="card border-0 shadow-sm rounded-4 p-4">
-            <div class="row g-4">
-                <div class="col-md-5">
-                    <h5 class="fw-bold mb-3">กรอกข้อมูลเพื่อสร้าง QR</h5>
-                    <div class="mb-3">
-                        <label class="form-label small">รหัสนักเรียน (ID)</label>
-                        <input type="text" id="qr-input-id" class="form-control rounded-pill" placeholder="เช่น 69001">
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                    <h6 class="fw-bold">สรุปภาพรวมวันนี้</h6>
+                    <small class="text-muted mb-3 d-block">23 พฤษภาคม 2567</small>
+                    <div class="text-center py-3">
+                        <img src="https://quickchart.io/chart?c={type:'doughnut',data:{labels:['มา','สาย','ขาด','ลา'],datasets:[{data:[132,12,8,6],backgroundColor:['%2310b981','%23f59e0b','%23ef4444','%233b82f6']}]},options:{plugins:{legend:{display:false}}}}" width="150">
+                        <h4 class="mt-2 mb-0">158</h4><small class="text-muted">คน</small>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label small">ชื่อ-นามสกุล</label>
-                        <input type="text" id="qr-input-name" class="form-control rounded-pill" placeholder="นายสมชาย ใจดี">
-                    </div>
-                    <button onclick="generateQR()" class="btn btn-primary w-100 rounded-pill fw-bold">สร้าง QR Code</button>
                 </div>
-                <div class="col-md-7 text-center border-start">
-                    <div id="qr-result-area" class="p-3 d-none">
-                        <div id="qr-card-to-print" class="p-4 border rounded-4 bg-white shadow-sm d-inline-block" style="width: 250px;">
-                            <h6 class="fw-bold text-primary mb-2">EduTrack QR</h6>
-                            <div id="qr-image-container" class="mb-2"></div>
-                            <div class="fw-bold" id="qr-display-name"></div>
-                            <div class="small text-muted" id="qr-display-id"></div>
-                        </div>
-                        <div class="mt-3">
-                            <button onclick="printQR()" class="btn btn-outline-dark rounded-pill px-4">พิมพ์บัตร QR</button>
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+                    <h6 class="fw-bold mb-3">กิจกรรมล่าสุด</h6>
+                    <div class="recent-list">
+                        <div class="d-flex mb-3 small">
+                            <div class="bg-success bg-opacity-10 text-success p-2 rounded me-3"><i class="fa-solid fa-camera"></i></div>
+                            <div><strong>สแกนเข้าเรียน</strong><br><span class="text-muted">นายสมศักดิ์ มีเกียรติ</span></div>
+                            <div class="ms-auto text-muted">08:15</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     `;
-}
-
-// --- ฟังก์ชันเสริมอื่นๆ ---
-
-async function loadClassRoom(room) {
-    const tbody = document.getElementById('student-list-area');
-    if(tbody) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center">กำลังดึงข้อมูล ${room}...</td></tr>`;
-    }
-}
-
-function updateMenu(activeId) {
-    document.querySelectorAll('.nav-link').forEach(el => {
-        el.classList.remove('active');
-        el.classList.add('text-dark');
-    });
-    const active = document.getElementById(activeId);
-    active.classList.add('active');
-    active.classList.remove('text-dark');
-}
-
-function generateQR() {
-    const id = document.getElementById('qr-input-id').value;
-    const name = document.getElementById('qr-input-name').value;
-    if (!id || !name) {
-        Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
-        return;
-    }
-    const qrUrl = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${id}&choe=UTF-8`;
-    document.getElementById('qr-image-container').innerHTML = `<img src="${qrUrl}" class="img-fluid">`;
-    document.getElementById('qr-display-name').innerText = name;
-    document.getElementById('qr-display-id').innerText = `ID: ${id}`;
-    document.getElementById('qr-result-area').classList.remove('d-none');
-}
-
-function logout() {
-    localStorage.clear();
-    window.location.href = 'index.html';
-}
-
-function printQR() {
-    const content = document.getElementById('qr-card-to-print').innerHTML;
-    const win = window.open('', '', 'height=500,width=500');
-    win.document.write('<html><head><title>Print QR</title>');
-    win.document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">');
-    win.document.write('<style>body{font-family:Sarabun;text-align:center;padding:20px;}</style></head><body>');
-    win.document.write(content);
-    win.document.write('</body></html>');
-    win.document.close();
-    setTimeout(() => { win.print(); }, 500);
 }
