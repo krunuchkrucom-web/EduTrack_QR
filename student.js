@@ -17,7 +17,7 @@ window.onload = () => {
 };
 
 async function fetchStudentData() {
-    const API_URL = "https://script.google.com/macros/s/AKfycbwHV8K0Me5It_ePtkt4EhEnFPzypA6Rdpl-zmpU-vABr2fTeFYQGI8DZSppXSggnuPbtw/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyPhlmzhDEL8ZK45r-ntJz-FrrKdJs7enX55caorz00yYI4Tkz47tX0VMnBIZdg_j6TZQ/exec";
     
     try {
         // ส่ง Action ไปที่ Google Apps Script เพื่อขอข้อมูลรายคน
