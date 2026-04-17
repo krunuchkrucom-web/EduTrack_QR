@@ -1,9 +1,8 @@
-const API_URL = "https://script.google.com/macros/s/AKfycby24u1huaujygcOgAFlBczHyDD9btZZJGgP0bjzb84Otc3QFzJ1ra6SqmOz0rzFhJ-aGw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxt5rndbk6Gw4d-opv4CHRRliB6K84awMxtSPJm5qTr5yPhjdZhllISfrR-zGlV3Tsgsw/exec";
 let currentSelectedRole = ""; 
 
-// --- 1. ระบบเลือกบทบาท ---
 function selectRole(role) {
-    currentSelectedRole = role;
+    currentSelectedRole = role; // 'Student' หรือ 'Teacher'
     document.getElementById('role-view').style.setProperty('display', 'none', 'important');
     document.getElementById('login-view').style.setProperty('display', 'flex', 'important');
     
@@ -19,12 +18,11 @@ function backToRole() {
     document.getElementById('login-view').style.setProperty('display', 'none', 'important');
 }
 
-// --- 2. ระบบ Login และ Redirect (จุดสำคัญ) ---
 async function handleLogin() {
     const userEl = document.getElementById('username');
     const passEl = document.getElementById('password');
-    const user = userEl.value;
-    const pass = passEl.value;
+    const user = userEl.value.trim();
+    const pass = passEl.value.trim();
 
     if (!user || !pass) {
         Swal.fire('คำเตือน', 'กรุณากรอกข้อมูลให้ครบ', 'warning');
@@ -36,27 +34,22 @@ async function handleLogin() {
     try {
         const response = await fetch(API_URL, { 
             method: 'POST', 
-            body: JSON.stringify({ action: 'login', user, pass }) 
+            body: JSON.stringify({ action: 'login', user: user, pass: pass }) 
         });
         const json = await response.json();
         
         document.getElementById('loader').style.display = 'none';
         
         if (json.success) {
-            if (json.role !== currentSelectedRole) {
+            // เช็คตัวพิมพ์ใหญ่-เล็กให้ตรงกับใน Google Sheets
+            if (json.role.toLowerCase() !== currentSelectedRole.toLowerCase()) {
                 Swal.fire('ผิดพลาด', `บัญชีนี้ไม่ใช่สิทธิ์ ${currentSelectedRole}`, 'error');
                 return;
             }
             
-            // เก็บข้อมูลลง LocalStorage
             localStorage.setItem('auth', JSON.stringify(json));
             
-            // ล้างค่าในฟอร์ม
-            userEl.value = "";
-            passEl.value = "";
-
-            // เปลี่ยนหน้าไปยังไฟล์ที่แยกไว้
-            if (json.role === 'Teacher') {
+            if (json.role.toLowerCase() === 'teacher') {
                 window.location.href = 'teacher.html';
             } else {
                 window.location.href = 'student.html';
