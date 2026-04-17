@@ -185,90 +185,165 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <script>
-        let selectedFileBase64 = "";
-        let currentRoomId = "";
+<script>
+    let selectedFileBase64 = "";
+    let currentRoomId = "";
 
-        // ฟังก์ชันดูตัวอย่างรูปภาพและแปลงเป็น Base64
-        function previewImage(input) {
-            const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('imagePreview').src = e.target.result;
-                    document.getElementById('imagePreview').style.display = 'inline-block';
-                    selectedFileBase64 = e.target.result;
+    // === 1. โหลดข้อมูลห้องเรียนทันทีเมื่อเปิดหน้าเว็บ ===
+    window.onload = function() {
+        loadRooms();
+        // แสดงชื่อครู (ถ้ามี)
+        document.getElementById('teacher-name-display').innerText = "อาจารย์"; 
+    };
+
+    function loadRooms() {
+        const area = document.getElementById('room-selection-area');
+        area.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
+
+        google.script.run.withSuccessHandler(function(rooms) {
+            area.innerHTML = ""; // ล้าง spinner
+            if (rooms.length === 0) {
+                area.innerHTML = '<small class="text-muted">ยังไม่มีห้องเรียน กรุณาเพิ่มห้องเรียนใหม่</small>';
+                return;
+            }
+            rooms.forEach(room => {
+                const btn = document.createElement('button');
+                btn.className = `btn ${room.color || 'btn-primary'} room-btn`;
+                btn.innerHTML = `<i class="fa-solid fa-graduation-cap me-1"></i> ${room.name}`;
+                btn.onclick = function() {
+                    // ลบ class active จากปุ่มอื่น
+                    document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active', 'ring'));
+                    btn.classList.add('active', 'ring');
+                    loadStudentData(room.name);
                 };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // เปิด Modal สำหรับเพิ่มใหม่
-        function openAddStudentModal() {
-            if(!currentRoomId) {
-                Swal.fire('กรุณาเลือกห้องเรียน', 'คุณต้องเลือกห้องเรียนก่อนทำการเพิ่มนักเรียน', 'warning');
-                return;
-            }
-            document.getElementById('modalTitle').innerText = "เพิ่มนักเรียนใหม่";
-            document.getElementById('studentForm').reset();
-            document.getElementById('editRowIndex').value = "";
-            document.getElementById('imagePreview').style.display = 'none';
-            selectedFileBase64 = "";
-            new bootstrap.Modal(document.getElementById('studentModal')).show();
-        }
-
-        // ฟังก์ชันส่งข้อมูลไปยัง Google Apps Script
-        function submitStudentForm() {
-            const id = document.getElementById('studentId').value;
-            const name = document.getElementById('studentName').value;
-            
-            if(!id || !name) {
-                Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกรหัสและชื่อนักเรียน', 'error');
-                return;
-            }
-
-            const studentData = {
-                id: id,
-                name: name,
-                photo: selectedFileBase64,
-                rowIndex: document.getElementById('editRowIndex').value,
-                room: currentRoomId
-            };
-
-            Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
-
-            google.script.run.withSuccessHandler(function(res) {
-                Swal.fire('สำเร็จ', res, 'success');
-                bootstrap.Modal.getInstance(document.getElementById('studentModal')).hide();
-                loadStudentData(currentRoomId); // โหลดตารางใหม่
-            }).processStudentData(studentData);
-        }
-
-        // ฟังก์ชันแก้ไขข้อมูล (ดึงข้อมูลเดิมมาใส่ในฟอร์ม)
-        function editStudent(id, name, photoUrl, rowIndex) {
-            document.getElementById('modalTitle').innerText = "แก้ไขข้อมูลนักเรียน";
-            document.getElementById('studentId').value = id;
-            document.getElementById('studentName').value = name;
-            document.getElementById('editRowIndex').value = rowIndex;
-            if(photoUrl) {
-                document.getElementById('imagePreview').src = photoUrl;
-                document.getElementById('imagePreview').style.display = 'inline-block';
-            }
-            new bootstrap.Modal(document.getElementById('studentModal')).show();
-        }
-
-        // ฟังก์ชันจัดการห้องเรียน (ตัวอย่างการเรียกใช้)
-        function loadStudentData(roomId) {
-            currentRoomId = roomId;
-            document.getElementById('current-room-display').innerText = roomId;
-            // โค้ดสำหรับโหลดข้อมูลจาก GAS มาแสดงในตาราง student-list-table
-        }
-        
-        function logout() {
-            Swal.fire('ออกจากระบบ', 'กำลังกลับสู่หน้าหลัก', 'success').then(() => {
-                // window.location.href = 'index.html';
+                area.appendChild(btn);
             });
+        }).getRooms();
+    }
+
+    // === 2. ฟังก์ชันเพิ่มห้องเรียนใหม่ ===
+    function openRoomModal() {
+        new bootstrap.Modal(document.getElementById('roomModal')).show();
+    }
+
+    function saveRoomToSheet() {
+        const name = document.getElementById('input-room-name').value;
+        const color = document.getElementById('input-room-color').value;
+
+        if (!name) {
+            Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่อห้องเรียน', 'warning');
+            return;
         }
-    </script>
+
+        Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+        google.script.run.withSuccessHandler(function(res) {
+            Swal.fire('สำเร็จ', 'เพิ่มห้องเรียนเรียบร้อยแล้ว', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('roomModal')).hide();
+            document.getElementById('input-room-name').value = ""; // ล้างค่า
+            loadRooms(); // โหลดปุ่มใหม่
+        }).addRoom({ action: 'addRoom', roomName: name, roomColor: color });
+    }
+
+    // === 3. โหลดรายชื่อนักเรียนเมื่อคลิกเลือกห้อง ===
+    function loadStudentData(roomId) {
+        currentRoomId = roomId;
+        document.getElementById('current-room-display').innerText = roomId;
+        const tableBody = document.getElementById('student-list-table');
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm"></div> กำลังโหลด...</td></tr>';
+
+        google.script.run.withSuccessHandler(function(students) {
+            tableBody.innerHTML = "";
+            if (students.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">ยังไม่มีรายชื่อนักเรียนในห้องนี้</td></tr>';
+                return;
+            }
+
+            students.forEach(std => {
+                const row = `<tr>
+                    <td>${std.num}</td>
+                    <td><span class="badge bg-light text-dark border">${std.id}</span></td>
+                    <td><img src="${std.photo || 'https://via.placeholder.com/40'}" onerror="this.src='https://via.placeholder.com/40'"></td>
+                    <td>${std.name}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="editStudent('${std.id}', '${std.name}', '${std.photo}', ${std.rowIndex})">
+                            <i class="fa-solid fa-pen-to-square"></i> แก้ไข
+                        </button>
+                    </td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }).getStudents(roomId);
+    }
+
+    // === ส่วนจัดการรูปภาพและ Student Form (ตามเดิมของคุณ) ===
+    function previewImage(input) {
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('imagePreview').style.display = 'inline-block';
+                selectedFileBase64 = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function openAddStudentModal() {
+        if(!currentRoomId) {
+            Swal.fire('กรุณาเลือกห้องเรียน', 'คุณต้องเลือกห้องเรียนก่อนทำการเพิ่มนักเรียน', 'warning');
+            return;
+        }
+        document.getElementById('modalTitle').innerText = "เพิ่มนักเรียนใหม่ในห้อง " + currentRoomId;
+        document.getElementById('studentForm').reset();
+        document.getElementById('editRowIndex').value = "";
+        document.getElementById('imagePreview').style.display = 'none';
+        selectedFileBase64 = "";
+        new bootstrap.Modal(document.getElementById('studentModal')).show();
+    }
+
+    function submitStudentForm() {
+        const id = document.getElementById('studentId').value;
+        const name = document.getElementById('studentName').value;
+        if(!id || !name) {
+            Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกรหัสและชื่อนักเรียน', 'error');
+            return;
+        }
+
+        const studentData = {
+            action: 'processStudentData',
+            id: id,
+            name: name,
+            photo: selectedFileBase64,
+            rowIndex: document.getElementById('editRowIndex').value,
+            room: currentRoomId
+        };
+
+        Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+        google.script.run.withSuccessHandler(function(res) {
+            Swal.fire('สำเร็จ', 'บันทึกข้อมูลเรียบร้อย', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('studentModal')).hide();
+            loadStudentData(currentRoomId);
+        }).processStudentData(studentData);
+    }
+
+    function editStudent(id, name, photoUrl, rowIndex) {
+        document.getElementById('modalTitle').innerText = "แก้ไขข้อมูลนักเรียน";
+        document.getElementById('studentId').value = id;
+        document.getElementById('studentName').value = name;
+        document.getElementById('editRowIndex').value = rowIndex;
+        if(photoUrl && photoUrl !== 'undefined') {
+            document.getElementById('imagePreview').src = photoUrl;
+            document.getElementById('imagePreview').style.display = 'inline-block';
+        }
+        new bootstrap.Modal(document.getElementById('studentModal')).show();
+    }
+
+    function logout() {
+        Swal.fire('ออกจากระบบ', 'กำลังกลับสู่หน้าหลัก', 'success');
+    }
+</script>
 </body>
 </html>
