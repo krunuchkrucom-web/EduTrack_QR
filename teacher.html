@@ -186,248 +186,241 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
 <script>
-    let selectedFileBase64 = "";
-    let currentRoomId = "";
-    // *** เปลี่ยน URL ตรงนี้ให้เป็น URL ล่าสุดจากการ Deploy Code.gs ***
-    const API_URL = "https://script.google.com/macros/s/AKfycbwAq-VQsdBtPTwf-ojmCaymWGFTp177ZspoQ18UUOM-yrn6AGI5okR2i9CwYEX9lgN8Rg/exec"; 
+let selectedFileBase64 = "";
+let currentRoomId = "";
+const API_URL = "https://script.google.com/macros/s/AKfycby7gj7fF-_DIknygRh37YqAV1IBthW_88l2klJfGJk1bwMJLl7H0VoTURrxMQf4YJhA4g/exec"; 
 
-    // === 1. โหลดข้อมูลเมื่อเปิดหน้าเว็บ ===
-    window.onload = function() {
-        const auth = JSON.parse(localStorage.getItem('auth'));
-        if (auth) {
-            document.getElementById('teacher-name-display').innerText = auth.name;
-        }
-        loadRooms(); 
-    };
-
-    // === 2. โหลดปุ่มห้องเรียน ===
-    async function loadRooms() {
-        const area = document.getElementById('room-selection-area');
-        area.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'getRooms' })
-            });
-            const rooms = await response.json();
-            area.innerHTML = ""; 
-            if (rooms.length === 0) {
-                area.innerHTML = '<small class="text-muted">ยังไม่มีห้องเรียน กรุณาเพิ่มห้องเรียนใหม่</small>';
-                return;
-            }
-            rooms.forEach(room => {
-                const btn = document.createElement('button');
-                btn.className = `btn ${room.color || 'btn-primary'} room-btn`;
-                btn.innerHTML = `<i class="fa-solid fa-graduation-cap me-1"></i> ${room.name}`;
-                btn.onclick = function() {
-                    document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active', 'ring'));
-                    btn.classList.add('active', 'ring');
-                    loadStudentData(room.name);
-                };
-                area.appendChild(btn);
-            });
-        } catch (err) {
-            area.innerHTML = '<small class="text-danger">การเชื่อมต่อผิดพลาด</small>';
-        }
+window.onload = function() {
+    const auth = JSON.parse(localStorage.getItem('auth'));
+    if (auth) {
+        document.getElementById('teacher-name-display').innerText = auth.name;
     }
+    loadRooms(); 
+};
 
-    // === 3. ดึงรายชื่อนักเรียน พร้อมปุ่มแก้ไขและลบ ===
-    async function loadStudentData(roomName) {
-        currentRoomId = roomName;
-        document.getElementById('current-room-display').innerText = roomName;
-        const tableBody = document.getElementById('student-list-table');
-        tableBody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm"></div> กำลังโหลด...</td></tr>';
-
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'getStudentsByRoom', room: roomName })
-            });
-            const students = await response.json();
-            tableBody.innerHTML = "";
-            if (students.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">ยังไม่มีรายชื่อนักเรียนในห้องนี้</td></tr>';
-                return;
-            }
-
-            students.forEach(std => {
-                const row = `<tr>
-                    <td>${std.num}</td>
-                    <td><span class="badge bg-light text-dark border">${std.id}</span></td>
-                    <td><img src="${std.photo || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" 
-                             style="width:40px; height:40px; object-fit:cover; border-radius:8px; border: 1px solid #ddd;"></td>
-                    <td>${std.name}</td>
-                    <td>
-                        <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary rounded-pill me-1" onclick="editStudent('${std.id}', '${std.name}', '${std.photo}')">
-                                <i class="fa-solid fa-pen-to-square"></i> แก้ไข
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteStudent('${std.id}')">
-                                <i class="fa-solid fa-trash"></i> ลบ
-                            </button>
-                        </div>
-                    </td>
-                </tr>`;
-                tableBody.innerHTML += row;
-            });
-        } catch (err) {
-            tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">ไม่สามารถดึงข้อมูลได้</td></tr>';
+// --- จัดการห้องเรียน ---
+async function loadRooms() {
+    const area = document.getElementById('room-selection-area');
+    area.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'getRooms' })
+        });
+        const rooms = await response.json();
+        area.innerHTML = ""; 
+        if (!rooms || rooms.length === 0) {
+            area.innerHTML = '<small class="text-muted">ยังไม่มีห้องเรียน กรุณาเพิ่มห้องเรียนใหม่</small>';
+            return;
         }
+        rooms.forEach(room => {
+            const btn = document.createElement('button');
+            btn.className = `btn ${room.color || 'btn-primary'} room-btn`;
+            btn.innerHTML = `<i class="fa-solid fa-graduation-cap me-1"></i> ${room.name}`;
+            btn.onclick = function() {
+                document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active', 'ring'));
+                btn.classList.add('active', 'ring');
+                loadStudentData(room.name);
+            };
+            area.appendChild(btn);
+        });
+    } catch (err) {
+        area.innerHTML = '<small class="text-danger">การเชื่อมต่อผิดพลาด</small>';
     }
+}
 
-    // === 4. บันทึกข้อมูล (Add/Update) ===
-    async function submitStudentForm() {
-        const id = document.getElementById('studentId').value;
-        const name = document.getElementById('studentName').value;
-        if(!id || !name) {
-            Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกรหัสและชื่อนักเรียน', 'error');
+// --- โหลดข้อมูลนักเรียน ---
+async function loadStudentData(roomName) {
+    currentRoomId = roomName;
+    document.getElementById('current-room-display').innerText = roomName;
+    const tableBody = document.getElementById('student-list-table');
+    tableBody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm"></div> กำลังโหลด...</td></tr>';
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'getStudentsByRoom', room: roomName })
+        });
+        const students = await response.json();
+        tableBody.innerHTML = "";
+        
+        if (!students || students.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">ยังไม่มีรายชื่อนักเรียนในห้องนี้</td></tr>';
             return;
         }
 
-        Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
-
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'processStudentData', // Action นี้รองรับทั้งเพิ่มและอัปเดตใน Code.gs
-                    id: id,
-                    name: name,
-                    photo: selectedFileBase64,
-                    room: currentRoomId
-                })
-            });
-            const res = await response.json();
-            if(res.success) {
-                Swal.fire('สำเร็จ', res.message, 'success');
-                bootstrap.Modal.getInstance(document.getElementById('studentModal')).hide();
-                loadStudentData(currentRoomId);
+        students.forEach(std => {
+            // ดึง URL จากสูตร =IMAGE("...") หรือใช้ URL ตรงๆ
+            let displayPhoto = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+            if (std.photo) {
+                const match = std.photo.match(/"([^"]+)"/);
+                displayPhoto = match ? match[1] : std.photo;
             }
-        } catch (err) {
-            Swal.fire('ผิดพลาด', 'การเชื่อมต่อ Server ล้มเหลว', 'error');
-        }
-    }
 
-    // === 5. แก้ไขและลบข้อมูล ===
-// --- แก้ไขฟังก์ชัน editStudent ---
-function editStudent(id, name, photo) {
+            const row = `<tr>
+                <td>${std.num}</td>
+                <td><span class="badge bg-light text-dark border">${std.id}</span></td>
+                <td><img src="${displayPhoto}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'"></td>
+                <td>${std.name}</td>
+                <td>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary rounded-pill me-1" onclick="editStudent('${std.id}', '${std.name}', '${displayPhoto}')">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteStudent('${std.id}')">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+    } catch (err) {
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">ไม่สามารถดึงข้อมูลได้</td></tr>';
+    }
+}
+
+// --- แก้ไข/ลบ ---
+function editStudent(id, name, photoUrl) {
     document.getElementById('modalTitle').innerText = "แก้ไขข้อมูลนักเรียน";
     document.getElementById('studentId').value = id;
-    document.getElementById('studentId').readOnly = true; // ล็อก ID ไม่ให้แก้
+    document.getElementById('studentId').readOnly = true; 
     document.getElementById('studentName').value = name;
     
-    // แสดงรูปเดิมใน Preview (ถ้ามี)
     const imgPreview = document.getElementById('imagePreview');
-    if(photo && photo.includes('http')) {
-        // ดึง URL ออกจากสูตร =IMAGE("URL") ถ้ามี
-        const cleanUrl = photo.replace('=IMAGE("', '').replace('")', '');
-        imgPreview.src = cleanUrl;
+    if(photoUrl && photoUrl.includes('http')) {
+        imgPreview.src = photoUrl;
         imgPreview.style.display = 'inline-block';
     } else {
         imgPreview.style.display = 'none';
     }
     
-    selectedFileBase64 = ""; // เคลียร์รูปเก่า เพื่อไม่ให้ส่งรูปเดิมซ้ำไปประมวลผลใหม่
+    selectedFileBase64 = ""; 
     new bootstrap.Modal(document.getElementById('studentModal')).show();
 }
 
-// --- แก้ไขฟังก์ชัน loadStudentData (ส่วนดึงรูปภาพมาแสดงในตาราง) ---
-// ในขั้นตอน students.forEach(std => { ... }) ให้แก้ส่วนดึงรูป:
-const displayPhoto = (std.photo && std.photo.startsWith('=')) 
-    ? std.photo.replace('=IMAGE("', '').replace('")', '') 
-    : (std.photo || 'https://cdn-icons-png.flaticon.com/512/149/149071.png');
+async function deleteStudent(id) {
+    const result = await Swal.fire({
+        title: 'ยืนยันการลบ?',
+        text: `คุณต้องการลบนักเรียนรหัส ${id} ใช่หรือไม่?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'ลบข้อมูล',
+        cancelButtonText: 'ยกเลิก'
+    });
 
-
-
-    async function deleteStudent(id) {
-        const result = await Swal.fire({
-            title: 'ยืนยันการลบ?',
-            text: "คุณต้องการลบนักเรียนรหัส " + id + " ใช่หรือไม่?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'ลบข้อมูล',
-            cancelButtonText: 'ยกเลิก'
-        });
-
-        if (result.isConfirmed) {
-            Swal.fire({ title: 'กำลังลบ...', didOpen: () => { Swal.showLoading(); } });
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'deleteStudent', id: id })
-                });
-                const res = await response.json();
-                if(res.success) {
-                    Swal.fire('ลบแล้ว!', res.message, 'success');
-                    loadStudentData(currentRoomId);
-                }
-            } catch (err) {
-                Swal.fire('ผิดพลาด', 'ไม่สามารถลบข้อมูลได้', 'error');
-            }
-        }
-    }
-
-    // === 6. จัดการห้องเรียน ===
-    async function saveRoomToSheet() {
-        const name = document.getElementById('input-room-name').value;
-        const color = document.getElementById('input-room-color').value;
-        if (!name) {
-            Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่อห้องเรียน', 'warning');
-            return;
-        }
-        Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => { Swal.showLoading(); } });
+    if (result.isConfirmed) {
+        Swal.fire({ title: 'กำลังลบ...', didOpen: () => { Swal.showLoading(); } });
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'addRoom', roomName: name, roomColor: color })
+                body: JSON.stringify({ action: 'deleteStudent', id: id })
             });
             const res = await response.json();
-            if (res.success) {
-                Swal.fire('สำเร็จ', 'เพิ่มห้องเรียนเรียบร้อยแล้ว', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('roomModal')).hide();
-                document.getElementById('input-room-name').value = ""; 
-                loadRooms();
+            if(res.success) {
+                Swal.fire('ลบแล้ว!', res.message, 'success');
+                loadStudentData(currentRoomId);
             }
         } catch (err) {
-            Swal.fire('ผิดพลาด', 'การเชื่อมต่อผิดพลาด', 'error');
+            Swal.fire('ผิดพลาด', 'ไม่สามารถลบข้อมูลได้', 'error');
         }
     }
+}
 
-    function previewImage(input) {
-        const file = input.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('imagePreview').src = e.target.result;
-                document.getElementById('imagePreview').style.display = 'inline-block';
-                selectedFileBase64 = e.target.result; // เก็บค่า Base64 เพื่อส่งไปบันทึกลง Drive
-            };
-            reader.readAsDataURL(file);
+// --- ฟอร์มและการบันทึก ---
+async function submitStudentForm() {
+    const id = document.getElementById('studentId').value;
+    const name = document.getElementById('studentName').value;
+    if(!id || !name) {
+        Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกรหัสและชื่อนักเรียน', 'error');
+        return;
+    }
+
+    Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'processStudentData',
+                id: id,
+                name: name,
+                photo: selectedFileBase64,
+                room: currentRoomId
+            })
+        });
+        const res = await response.json();
+        if(res.success) {
+            Swal.fire('สำเร็จ', res.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('studentModal')).hide();
+            loadStudentData(currentRoomId);
         }
+    } catch (err) {
+        Swal.fire('ผิดพลาด', 'การเชื่อมต่อ Server ล้มเหลว', 'error');
     }
+}
 
-    function openAddStudentModal() {
-        if(!currentRoomId) {
-            Swal.fire('กรุณาเลือกห้องเรียน', 'คุณต้องเลือกห้องเรียนก่อนทำการเพิ่มนักเรียน', 'warning');
-            return;
+function previewImage(input) {
+    const file = input.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('imagePreview').src = e.target.result;
+            document.getElementById('imagePreview').style.display = 'inline-block';
+            selectedFileBase64 = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// --- UI Helpers ---
+function openAddStudentModal() {
+    if(!currentRoomId) {
+        Swal.fire('กรุณาเลือกห้องเรียน', 'คุณต้องเลือกห้องเรียนก่อนทำการเพิ่มนักเรียน', 'warning');
+        return;
+    }
+    document.getElementById('modalTitle').innerText = "เพิ่มนักเรียนในห้อง " + currentRoomId;
+    document.getElementById('studentForm').reset();
+    document.getElementById('studentId').readOnly = false;
+    document.getElementById('imagePreview').style.display = 'none';
+    selectedFileBase64 = "";
+    new bootstrap.Modal(document.getElementById('studentModal')).show();
+}
+
+function openRoomModal() {
+    new bootstrap.Modal(document.getElementById('roomModal')).show();
+}
+
+async function saveRoomToSheet() {
+    const name = document.getElementById('input-room-name').value;
+    const color = document.getElementById('input-room-color').value;
+    if (!name) {
+        Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่อห้องเรียน', 'warning');
+        return;
+    }
+    Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => { Swal.showLoading(); } });
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'addRoom', roomName: name, roomColor: color })
+        });
+        const res = await response.json();
+        if (res.success) {
+            Swal.fire('สำเร็จ', 'เพิ่มห้องเรียนเรียบร้อยแล้ว', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('roomModal')).hide();
+            document.getElementById('input-room-name').value = ""; 
+            loadRooms();
         }
-        document.getElementById('modalTitle').innerText = "เพิ่มนักเรียนในห้อง " + currentRoomId;
-        document.getElementById('studentForm').reset();
-        document.getElementById('studentId').readOnly = false;
-        document.getElementById('imagePreview').style.display = 'none';
-        selectedFileBase64 = "";
-        new bootstrap.Modal(document.getElementById('studentModal')).show();
+    } catch (err) {
+        Swal.fire('ผิดพลาด', 'การเชื่อมต่อผิดพลาด', 'error');
     }
+}
 
-    function openRoomModal() {
-        new bootstrap.Modal(document.getElementById('roomModal')).show();
-    }
-
-    function logout() {
-        localStorage.removeItem('auth');
-        window.location.href = "index.html";
-    }
+function logout() {
+    localStorage.removeItem('auth');
+    window.location.href = "index.html";
+}
 </script>
 </body>
 </html>
