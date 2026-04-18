@@ -283,6 +283,7 @@ async function confirmDeleteRoom(roomName) {
 }
 
 // === 2. จัดการนักเรียน ===
+// ค้นหาฟังก์ชัน loadStudentData ใน teacher.html แล้ววางทับด้วยโค้ดนี้ครับ
 async function loadStudentData(roomName) {
     currentRoomId = roomName;
     document.getElementById('current-room-display').innerText = roomName;
@@ -303,16 +304,16 @@ async function loadStudentData(roomName) {
         }
 
         students.forEach((std, index) => {
-            let imgUrl = std.photo || DEFAULT_AVATAR;
-            // Clean Google Drive URL structure if needed
-            if (imgUrl.includes('=IMAGE("')) {
-                imgUrl = imgUrl.match(/"([^"]+)"/)[1];
+            // ตรวจสอบ URL รูปภาพ
+            let imgUrl = DEFAULT_AVATAR;
+            if (std.photo && std.photo.startsWith('http')) {
+                imgUrl = std.photo;
             }
 
             const row = `<tr>
                 <td class="fw-bold">${index + 1}</td>
                 <td><span class="badge bg-light text-dark border px-3 py-2">${std.id}</span></td>
-                <td><img src="${imgUrl}" onerror="this.src='${DEFAULT_AVATAR}'"></td>
+                <td><img src="${imgUrl}" onerror="this.src='${DEFAULT_AVATAR}'" style="width:45px; height:45px; object-fit:cover; border-radius:10px;"></td>
                 <td class="fw-bold">${std.name}</td>
                 <td class="text-center">
                     <div class="btn-group shadow-sm rounded-pill">
