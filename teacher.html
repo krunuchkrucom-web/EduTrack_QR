@@ -452,14 +452,13 @@ function previewImage(input) {
         }
         const reader = new FileReader();
         reader.onload = (e) => {
-            const fullBase64 = e.target.result;
+const fullBase64 = e.target.result;
+            // แสดงรูปตัวอย่างใน Modal
             document.getElementById('imagePreview').src = fullBase64;
             document.getElementById('imagePreview').style.display = 'inline-block';
             
-            // แยกเอาเฉพาะ Data ส่วนที่ส่งไป Save (ตัด data:image/...;base64, ออก)
-            selectedFileBase64 = fullBase64.split(',')[1]; 
-            // เก็บประเภทไฟล์ไว้ด้วย (ทางเลือก)
-            selectedFileType = file.type; 
+            // *** เก็บเฉพาะข้อมูลรหัสภาพ (ตัด data:image/png;base64, ออก) ***
+            selectedFileBase64 = fullBase64.split(',')[1];
         };
         reader.readAsDataURL(file);
     }
