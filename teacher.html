@@ -441,19 +441,25 @@ async function saveRoomToSheet() {
     }
 }
 
+// แก้ไขฟังก์ชันเดิมในส่วนของสคริปต์
 function previewImage(input) {
     const file = input.files[0];
     if (file) {
-        if (file.size > 2 * 1024 * 1024) { // Limit 2MB
+        if (file.size > 2 * 1024 * 1024) {
             Swal.fire('ไฟล์ใหญ่เกินไป', 'กรุณาใช้รูปภาพขนาดไม่เกิน 2MB', 'warning');
             input.value = "";
             return;
         }
         const reader = new FileReader();
         reader.onload = (e) => {
-            document.getElementById('imagePreview').src = e.target.result;
+            const fullBase64 = e.target.result;
+            document.getElementById('imagePreview').src = fullBase64;
             document.getElementById('imagePreview').style.display = 'inline-block';
-            selectedFileBase64 = e.target.result;
+            
+            // แยกเอาเฉพาะ Data ส่วนที่ส่งไป Save (ตัด data:image/...;base64, ออก)
+            selectedFileBase64 = fullBase64.split(',')[1]; 
+            // เก็บประเภทไฟล์ไว้ด้วย (ทางเลือก)
+            selectedFileType = file.type; 
         };
         reader.readAsDataURL(file);
     }
