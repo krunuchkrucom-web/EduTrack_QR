@@ -309,18 +309,35 @@
     }
 
     // === 5. แก้ไขและลบข้อมูล ===
-    function editStudent(id, name, photo) {
-        document.getElementById('modalTitle').innerText = "แก้ไขข้อมูลนักเรียน";
-        document.getElementById('studentId').value = id;
-        document.getElementById('studentId').readOnly = true; // ห้ามแก้รหัสตอนแก้ไข
-        document.getElementById('studentName').value = name;
-        if(photo && photo.startsWith('http')) {
-            document.getElementById('imagePreview').src = photo;
-            document.getElementById('imagePreview').style.display = 'inline-block';
-        }
-        selectedFileBase64 = ""; // รีเซ็ตเป็นว่างถ้าไม่ได้เลือกไฟล์ใหม่ (Code.gs จะไม่แก้รูปถ้าไม่มีส่งไป)
-        new bootstrap.Modal(document.getElementById('studentModal')).show();
+// --- แก้ไขฟังก์ชัน editStudent ---
+function editStudent(id, name, photo) {
+    document.getElementById('modalTitle').innerText = "แก้ไขข้อมูลนักเรียน";
+    document.getElementById('studentId').value = id;
+    document.getElementById('studentId').readOnly = true; // ล็อก ID ไม่ให้แก้
+    document.getElementById('studentName').value = name;
+    
+    // แสดงรูปเดิมใน Preview (ถ้ามี)
+    const imgPreview = document.getElementById('imagePreview');
+    if(photo && photo.includes('http')) {
+        // ดึง URL ออกจากสูตร =IMAGE("URL") ถ้ามี
+        const cleanUrl = photo.replace('=IMAGE("', '').replace('")', '');
+        imgPreview.src = cleanUrl;
+        imgPreview.style.display = 'inline-block';
+    } else {
+        imgPreview.style.display = 'none';
     }
+    
+    selectedFileBase64 = ""; // เคลียร์รูปเก่า เพื่อไม่ให้ส่งรูปเดิมซ้ำไปประมวลผลใหม่
+    new bootstrap.Modal(document.getElementById('studentModal')).show();
+}
+
+// --- แก้ไขฟังก์ชัน loadStudentData (ส่วนดึงรูปภาพมาแสดงในตาราง) ---
+// ในขั้นตอน students.forEach(std => { ... }) ให้แก้ส่วนดึงรูป:
+const displayPhoto = (std.photo && std.photo.startsWith('=')) 
+    ? std.photo.replace('=IMAGE("', '').replace('")', '') 
+    : (std.photo || 'https://cdn-icons-png.flaticon.com/512/149/149071.png');
+
+
 
     async function deleteStudent(id) {
         const result = await Swal.fire({
