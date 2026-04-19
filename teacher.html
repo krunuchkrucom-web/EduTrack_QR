@@ -166,10 +166,14 @@
                     <div class="mb-3">
                         <label class="small fw-bold">โทนสี</label>
                         <select id="input-room-color" class="form-select rounded-pill">
-                            <option value="btn-primary">สีน้ำเงิน</option>
+                            <option value="btn-primary">สีน้ำเงิน (Default)</option>
                             <option value="btn-success">สีเขียว</option>
                             <option value="btn-warning">สีส้ม</option>
                             <option value="btn-danger">สีแดง</option>
+                            <option value="btn-info text-white">สีฟ้าสดใส</option>
+                            <option value="btn-dark">สีดำ/เทาเข้ม</option>
+                            <option value="style='background-color: #8b5cf6; color: white;'">สีม่วง</option>
+                            <option value="style='background-color: #ec4899; color: white;'">สีชมพู</option>
                         </select>
                     </div>
                 </div>
@@ -289,14 +293,40 @@ function setActiveRoom(btn, roomName) {
     });
   }
 
-    function deleteRoom(name) {
-  if(confirm('คุณแน่ใจใช่ไหมที่จะลบห้อง ' + name)) {
-    // เรียกฟังก์ชันใน Code.gs
-    google.script.run.withSuccessHandler(function(res) {
-      alert('ลบห้องเรียนเรียบร้อยแล้ว');
-      loadRooms(); // โหลดรายการห้องใหม่หลังลบเสร็จ
-    }).deleteRoomFromServer(name); 
-  }
+    // แก้ไขฟังก์ชันยืนยันการลบห้องเรียน
+async function confirmDeleteRoom(roomName) {
+    const result = await Swal.fire({
+        title: `ยืนยันการลบห้อง ${roomName}?`,
+        text: "ข้อมูลนักเรียนทั้งหมดในห้องนี้จะถูกลบออกด้วย!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'ใช่, ลบเลย!',
+        cancelButtonText: 'ยกเลิก'
+    });
+
+    if (result.isConfirmed) {
+        Swal.fire({ title: 'กำลังลบข้อมูล...', didOpen: () => Swal.showLoading() });
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'deleteRoom', roomName: roomName })
+            });
+            const res = await response.json();
+            if (res.success) {
+                Swal.fire('ลบเรียบร้อย!', '', 'success');
+                loadRooms(); // โหลดรายการห้องใหม่
+                // ถ้าห้องที่ลบเป็นห้องที่เปิดค้างอยู่ ให้ล้างตารางนักเรียน
+                if (currentRoomId === roomName) {
+                    document.getElementById('student-list-table').innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">กรุณาเลือกห้องเรียนเพื่อดูข้อมูล</td></tr>';
+                    document.getElementById('current-room-display').innerText = "กรุณาเลือกห้อง";
+                }
+            }
+        } catch (e) {
+            Swal.fire('ผิดพลาด', 'ไม่สามารถเชื่อมต่อ Server ได้', 'error');
+        }
+    }
 }
 
 // === โหลดนักเรียน (จุดที่แก้ให้รูปภาพปรากฏ) ===
