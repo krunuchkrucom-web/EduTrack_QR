@@ -233,26 +233,7 @@
             const students = await res.json();
             tbody.innerHTML = students.length ? "" : '<tr><td colspan="5" class="text-center py-4">ไม่พบรายชื่อนักเรียนในห้องนี้</td></tr>';
             
-            // ดึงข้อมูล User จาก LocalStorage มาเช็คสิทธิ์
-            const currentUser = JSON.parse(localStorage.getItem('userData'));
             students.forEach(s => {
-                // สร้างปุ่มจัดการ โดยเช็คว่าถ้าเป็น admin หรือครูผู้สอน ถึงจะแสดงปุ่ม
-                    let actionButtons = "";
-                    
-                    if (currentUser.role === 'admin' || currentUser.role === 'teacher') { 
-                        actionButtons = `
-                            <button class="btn btn-sm btn-outline-primary border-0 me-1" onclick="editStudent('${s.id}', '${s.name}', '${s.photo}')">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteStudent('${s.id}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        `;
-                    } else {
-                        // ถ้าไม่มีสิทธิ์ อาจจะแสดงแค่ไอคอนล็อค หรือปล่อยว่างไว้
-                        actionButtons = `<i class="fas fa-lock text-muted" title="ไม่มีสิทธิ์แก้ไข"></i>`;
-                    }
-                
                 tbody.innerHTML += `
                     <tr>
                         <td class="fw-bold">${s.num}</td>
