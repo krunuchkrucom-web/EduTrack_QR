@@ -8,120 +8,145 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f9; }
-        .sidebar { min-height: 100vh; background: white; border-right: 1px solid #e0e0e0; }
-        .nav-link { color: #333; margin-bottom: 10px; border-radius: 8px; }
-        .nav-link.active { background-color: #0d6efd; color: white !important; }
-        .card { border: none; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .btn-room { min-width: 120px; position: relative; }
-        .btn-delete-room { position: absolute; top: -5px; right: -5px; padding: 2px 6px; font-size: 10px; border-radius: 50%; }
-        #previewImg { width: 100px; height: 120px; object-fit: cover; border: 1px solid #ddd; border-radius: 8px; }
+        body { font-family: 'Sarabun', sans-serif; background-color: #f8f9fa; }
+        
+        /* Sidebar Styles (ตามรูปภาพ) */
+        .sidebar { min-height: 100vh; background: white; padding: 20px; border-right: 1px solid #eee; }
+        .brand-title { color: #0d6efd; font-weight: bold; font-size: 24px; margin-bottom: 5px; }
+        .brand-sub { font-size: 12px; color: #888; margin-bottom: 30px; }
+        
+        .nav-link { 
+            color: #444; 
+            padding: 12px 15px; 
+            border-radius: 8px; 
+            margin-bottom: 8px;
+            transition: 0.3s;
+        }
+        .nav-link:hover { background: #f0f4ff; color: #0d6efd; }
+        .nav-link.active { background: #0d6efd; color: white !important; box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3); }
+        .nav-link i { width: 25px; }
+        
+        /* Dashboard Cards */
+        .card-custom { border: none; border-radius: 15px; transition: transform 0.2s; cursor: pointer; color: white; }
+        .card-custom:hover { transform: translateY(-5px); }
+        .bg-card-student { background-color: #10b981; } /* สีเขียวตามรูป */
+        .bg-card-room { background-color: #f59e0b; }    /* สีส้มตามรูป */
+        
+        /* Student Table & Room Buttons */
+        .room-btn-group { display: inline-flex; align-items: center; margin-right: 10px; margin-bottom: 10px; }
+        .btn-room-main { border-top-right-radius: 0; border-bottom-right-radius: 0; min-width: 100px; }
+        .btn-room-del { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 1px solid rgba(255,255,255,0.3); }
+        
+        #previewImg { width: 80px; height: 100px; object-fit: cover; border-radius: 5px; border: 1px solid #ddd; }
+        .logout-link { color: #dc3545; margin-top: 50px; display: block; text-decoration: none; padding: 12px 15px; }
     </style>
 </head>
 <body>
 
 <div class="container-fluid">
     <div class="row">
-        <nav class="col-md-2 d-none d-md-block sidebar p-3">
-            <h4 class="text-primary fw-bold mb-4">EduTrack QR</h4>
-            <div class="nav flex-column">
-                <a class="nav-link active" href="#"><i class="fas fa-users-cog me-2"></i> จัดการนักเรียน</a>
-                <a class="nav-link" href="#"><i class="fas fa-calendar-check me-2"></i> สแกนเข้าเรียน</a>
-                <a class="nav-link" href="#"><i class="fas fa-qrcode me-2"></i> สร้าง QR Code</a>
-                <hr>
-                <a class="nav-link text-danger" href="index.html" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i> ออกจากระบบ</a>
-            </div>
-        </nav>
+        <div class="col-md-2 sidebar d-none d-md-block">
+            <div class="brand-title">EduTrack QR</div>
+            <div class="brand-sub">Smart Attendance System</div>
+            
+            <nav class="nav flex-column mt-4">
+                <a class="nav-link active" href="#"><i class="fas fa-users"></i> จัดการนักเรียน</a>
+                <a class="nav-link" href="#"><i class="fas fa-camera"></i> สแกนเข้าเรียน</a>
+                <a class="nav-link" href="#"><i class="fas fa-qrcode"></i> สร้าง QR Code</a>
+                <a class="nav-link" href="#"><i class="fas fa-chart-pie"></i> สรุปผลการเรียน</a>
+                
+                <a href="#" class="logout-link" onclick="logout()"><i class="fas fa-power-off"></i> ออกจากระบบ</a>
+            </nav>
+        </div>
 
-        <main class="col-md-10 ms-sm-auto p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4>ยินดีต้อนรับ, <span id="userDisplay" class="text-primary">...</span> 👋</h4>
-                <div id="loader" class="spinner-border spinner-border-sm text-primary d-none"></div>
-            </div>
+        <div class="col-md-10 p-4">
+            <h5 class="mb-4">ยินดีต้อนรับ, <span id="userDisplay" class="text-primary fw-bold">admin</span> 👏</h5>
 
-            <div class="row g-3 mb-4">
+            <div class="row mb-4">
                 <div class="col-md-6">
-                    <div class="card bg-success text-white p-3" style="cursor:pointer" data-bs-toggle="modal" data-bs-target="#studentModal">
+                    <div class="card card-custom bg-card-student p-4" data-bs-toggle="modal" data-bs-target="#studentModal">
                         <div class="d-flex align-items-center">
-                            <i class="fas fa-user-plus fa-2x me-3"></i>
+                            <div class="bg-white bg-opacity-25 rounded-circle p-3 me-3">
+                                <i class="fas fa-user-plus fa-2x"></i>
+                            </div>
                             <div>
-                                <h5 class="mb-0">เพิ่มนักเรียน</h5>
-                                <small>ลงทะเบียนรายบุคคล</small>
+                                <h4 class="mb-0">เพิ่มนักเรียน</h4>
+                                <p class="mb-0 opacity-75">ลงทะเบียนรายบุคคล</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="card bg-warning text-dark p-3" style="cursor:pointer" data-bs-toggle="modal" data-bs-target="#roomModal">
+                    <div class="card card-custom bg-card-room p-4" data-bs-toggle="modal" data-bs-target="#roomModal">
                         <div class="d-flex align-items-center">
-                            <i class="fas fa-folder-plus fa-2x me-3"></i>
+                            <div class="bg-white bg-opacity-25 rounded-circle p-3 me-3">
+                                <i class="fas fa-folder-plus fa-2x"></i>
+                            </div>
                             <div>
-                                <h5 class="mb-0">จัดการห้องเรียน</h5>
-                                <small>เพิ่ม/ลบ กลุ่มการเรียน</small>
+                                <h4 class="mb-0">จัดการห้องเรียน</h4>
+                                <p class="mb-0 opacity-75">เพิ่ม/ลบ กลุ่มการเรียน</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card p-3 mb-4">
-                <h6><i class="fas fa-graduation-cap me-2"></i> เลือกห้องเรียน</h6>
-                <div id="roomContainer" class="d-flex flex-wrap gap-2 mt-2">
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                <h6 class="mb-3"><i class="fas fa-graduation-cap me-2 text-secondary"></i>เลือกห้องเรียน</h6>
+                <div id="roomContainer" class="d-flex flex-wrap">
                     </div>
             </div>
 
-            <div class="card p-3">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6><i class="fas fa-list me-2"></i> รายชื่อนักเรียน: <span id="currentRoomText" class="text-primary">กรุณาเลือกห้อง</span></h6>
-                    <input type="text" id="searchInput" class="form-control form-control-sm w-25" placeholder="ค้นหาชื่อหรือรหัส...">
-                </div>
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h6 class="mb-3">
+                    <i class="fas fa-list-ul me-2 text-secondary"></i>
+                    รายชื่อนักเรียน: <span id="currentRoomText" class="text-primary fw-bold">กรุณาเลือกห้อง</span>
+                </h6>
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table align-middle">
                         <thead class="table-light">
                             <tr>
                                 <th>ลำดับ</th>
                                 <th>รหัส</th>
                                 <th>รูป</th>
                                 <th>ชื่อ-นามสกุล</th>
-                                <th>จัดการ</th>
+                                <th class="text-end">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="studentTableBody">
-                            <tr><td colspan="5" class="text-center text-muted">กรุณาเลือกห้องเรียนเพื่อดูข้อมูล</td></tr>
+                            <tr><td colspan="5" class="text-center py-5 text-muted">กรุณาเลือกห้องเรียนเพื่อดูข้อมูล</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 </div>
 
 <div class="modal fade" id="studentModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">ข้อมูลนักเรียน</h5>
+        <div class="modal-content border-0 rounded-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">บันทึกข้อมูลนักเรียน</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="studentForm">
-                    <div class="text-center mb-3">
-                        <img id="previewImg" src="https://via.placeholder.com/100x120?text=No+Image">
-                        <input type="file" id="fileInput" class="form-control form-control-sm mt-2" accept="image/*">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">รหัสนักเรียน</label>
-                        <input type="text" id="stdId" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">ชื่อ-นามสกุล (ห้ามมีตัวเลข)</label>
-                        <input type="text" id="stdName" class="form-control" required>
-                    </div>
-                </form>
+                <div class="text-center mb-4">
+                    <img id="previewImg" src="https://via.placeholder.com/80x100?text=IMG" class="mb-2 shadow-sm">
+                    <input type="file" id="fileInput" class="form-control form-control-sm mx-auto" style="max-width: 200px;" accept="image/*">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small">รหัสนักเรียน</label>
+                    <input type="text" id="stdId" class="form-control rounded-3" placeholder="เช่น 6630101xxxx">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small">ชื่อ-นามสกุล</label>
+                    <input type="text" id="stdName" class="form-control rounded-3" placeholder="กรอกชื่อและนามสกุล">
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-                <button type="button" class="btn btn-primary" onclick="saveStudent()">บันทึกข้อมูล</button>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-primary rounded-3 px-4" onclick="saveStudent()">บันทึกข้อมูล</button>
             </div>
         </div>
     </div>
@@ -129,29 +154,21 @@
 
 <div class="modal fade" id="roomModal" tabindex="-1">
     <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">เพิ่มห้องเรียน</h5>
+        <div class="modal-content border-0 rounded-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">เพิ่มห้องเรียน</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">ชื่อห้อง (เช่น ปวช.1/1)</label>
-                    <input type="text" id="newRoomName" class="form-control">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">สีปุ่ม</label>
-                    <select id="newRoomColor" class="form-select">
-                        <option value="btn-primary">สีน้ำเงิน</option>
-                        <option value="btn-success">สีเขียว</option>
-                        <option value="btn-info text-white">สีฟ้า</option>
-                        <option value="btn-warning">สีเหลือง</option>
-                        <option value="btn-danger">สีแดง</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary w-100" onclick="addRoom()">ยืนยันเพิ่มห้อง</button>
+            <div class="modal-body text-center">
+                <input type="text" id="newRoomName" class="form-control mb-3 rounded-3" placeholder="ชื่อห้อง เช่น ปวช.1/1">
+                <select id="newRoomColor" class="form-select mb-3 rounded-3">
+                    <option value="btn-primary">สีน้ำเงิน (Default)</option>
+                    <option value="btn-warning">สีเหลือง (Warning)</option>
+                    <option value="btn-info text-white">สีฟ้า (Info)</option>
+                    <option value="btn-success">สีเขียว (Success)</option>
+                    <option value="btn-danger">สีแดง (Danger)</option>
+                </select>
+                <button class="btn btn-primary w-100 rounded-3" onclick="addRoom()">ยืนยันการเพิ่ม</button>
             </div>
         </div>
     </div>
@@ -161,22 +178,19 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx-_wojFp6rkj_FRyfWo2K1eQvjyiLKeEQbjDTolRcvPzInyC6q5CmWpE0M2cC-pMPIhQ/exec"; 
+    // --- ตั้งค่า URL ของคุณที่นี่ ---
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx-_wojFp6rkj_FRyfWo2K1eQvjyiLKeEQbjDTolRcvPzInyC6q5CmWpE0M2cC-pMPIhQ/exec";
+    
     let currentRoom = "";
-    let userData = JSON.parse(localStorage.getItem('userData')) || null;
+    let userData = JSON.parse(localStorage.getItem('userData')) || { name: 'admin', role: 'admin' };
     let base64Photo = "";
 
-    // ตรวจสอบ Login
-    if (!userData) {
-        window.location.href = "index.html";
-    } else {
-        document.getElementById('userDisplay').innerText = userData.name;
-        loadRooms();
-    }
+    document.getElementById('userDisplay').innerText = userData.name;
 
-    // ฟังก์ชันดึงห้องเรียน
+    // 1. ดึงข้อมูลห้องเรียนทันทีที่เปิดหน้า
+    window.onload = loadRooms;
+
     async function loadRooms() {
-        showLoader(true);
         try {
             const res = await fetch(WEB_APP_URL, {
                 method: 'POST',
@@ -184,19 +198,20 @@
             });
             const rooms = await res.json();
             const container = document.getElementById('roomContainer');
-            container.innerHTML = rooms.length ? "" : '<small class="text-muted">ยังไม่มีห้องเรียน</small>';
+            container.innerHTML = rooms.length ? "" : '<small class="text-muted">ยังไม่มีห้องเรียนในระบบ</small>';
             
             rooms.forEach(room => {
                 container.innerHTML += `
-                    <div class="position-relative">
-                        <button class="btn ${room.color} btn-room" onclick="selectRoom('${room.name}')">
-                            <i class="fas fa-graduation-cap"></i> ${room.name}
+                    <div class="room-btn-group shadow-sm rounded-3 overflow-hidden">
+                        <button class="btn ${room.color} btn-room-main" onclick="selectRoom('${room.name}')">
+                            <i class="fas fa-graduation-cap me-1"></i> ${room.name}
                         </button>
-                        <button class="btn btn-dark btn-delete-room" onclick="deleteRoom('${room.name}')">×</button>
+                        <button class="btn ${room.color} btn-room-del" onclick="deleteRoom('${room.name}')">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>`;
             });
-        } catch (e) { console.error(e); }
-        showLoader(false);
+        } catch (e) { console.error("LoadRooms Error:", e); }
     }
 
     function selectRoom(name) {
@@ -205,61 +220,67 @@
         loadStudents();
     }
 
+    async function loadStudents() {
+        if(!currentRoom) return;
+        const tbody = document.getElementById('studentTableBody');
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div> กำลังโหลด...</td></tr>';
+        
+        try {
+            const res = await fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'getStudentsByRoom', room: currentRoom })
+            });
+            const students = await res.json();
+            tbody.innerHTML = students.length ? "" : '<tr><td colspan="5" class="text-center py-4">ไม่พบรายชื่อนักเรียนในห้องนี้</td></tr>';
+            
+            students.forEach(s => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="fw-bold">${s.num}</td>
+                        <td>${s.id}</td>
+                        <td><img src="${s.photo || 'https://via.placeholder.com/40'}" class="rounded shadow-sm" width="40"></td>
+                        <td>${s.name}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteStudent('${s.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+        } catch (e) { tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>'; }
+    }
+
     async function addRoom() {
         const name = document.getElementById('newRoomName').value;
         const color = document.getElementById('newRoomColor').value;
-        if(!name) return;
+        if(!name) return Swal.fire('แจ้งเตือน','กรุณาระบุชื่อห้องเรียน','warning');
 
-        showLoader(true);
+        Swal.showLoading();
         const res = await fetch(WEB_APP_URL, {
             method: 'POST',
             body: JSON.stringify({ action: 'addRoom', roomName: name, roomColor: color, userName: userData.name })
         });
         const result = await res.json();
-        showLoader(false);
-
+        
         if(result.success) {
-            Swal.fire('สำเร็จ', 'เพิ่มห้องเรียนแล้ว', 'success');
+            Swal.fire('สำเร็จ', 'เพิ่มห้องเรียนเรียบร้อย', 'success');
             loadRooms();
             bootstrap.Modal.getInstance(document.getElementById('roomModal')).hide();
+            document.getElementById('newRoomName').value = "";
         } else {
             Swal.fire('ผิดพลาด', result.message, 'error');
         }
     }
 
-    async function loadStudents() {
-        if(!currentRoom) return;
-        showLoader(true);
-        const res = await fetch(WEB_APP_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'getStudentsByRoom', room: currentRoom })
-        });
-        const students = await res.json();
-        const tbody = document.getElementById('studentTableBody');
-        tbody.innerHTML = students.length ? "" : '<tr><td colspan="5" class="text-center">ไม่มีข้อมูล</td></tr>';
-        
-        students.forEach(s => {
-            tbody.innerHTML += `
-                <tr>
-                    <td>${s.num}</td>
-                    <td>${s.id}</td>
-                    <td><img src="${s.photo || 'https://via.placeholder.com/40'}" class="rounded" width="40"></td>
-                    <td>${s.name}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteStudent('${s.id}')"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>`;
-        });
-        showLoader(false);
-    }
-
     async function saveStudent() {
         const id = document.getElementById('stdId').value;
         const name = document.getElementById('stdName').value;
-        if(!currentRoom) { Swal.fire('กรุณาเลือกห้องก่อน','','warning'); return; }
-        if(!id || !name) { Swal.fire('กรุณากรอกข้อมูลให้ครบ','','warning'); return; }
+        
+        if(!currentRoom) return Swal.fire('กรุณาเลือกห้องก่อน','','warning');
+        if(!id || !name) return Swal.fire('กรุณากรอกข้อมูลให้ครบ','','warning');
 
-        showLoader(true);
+        Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
+        
         const res = await fetch(WEB_APP_URL, {
             method: 'POST',
             body: JSON.stringify({ 
@@ -268,30 +289,50 @@
             })
         });
         const result = await res.json();
-        showLoader(false);
 
         if(result.success) {
             Swal.fire('สำเร็จ', result.message, 'success');
             loadStudents();
             bootstrap.Modal.getInstance(document.getElementById('studentModal')).hide();
-            document.getElementById('studentForm').reset();
-            document.getElementById('previewImg').src = "https://via.placeholder.com/100x120";
+            document.getElementById('stdId').value = "";
+            document.getElementById('stdName').value = "";
+            document.getElementById('previewImg').src = "https://via.placeholder.com/80x100";
             base64Photo = "";
         } else {
             Swal.fire('แจ้งเตือน', result.message, 'error');
         }
     }
 
-    async function deleteRoom(name) {
+    async function deleteStudent(stdId) {
         const confirm = await Swal.fire({
-            title: 'ลบห้อง '+name+'?',
-            text: "นักเรียนในห้องนี้จะถูกลบทั้งหมด!",
+            title: 'ยืนยันการลบ?',
+            text: "ข้อมูลนักเรียนรหัส " + stdId + " จะหายไปจากระบบ",
             icon: 'warning',
-            showCancelButton: true
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonText: 'ใช่, ลบเลย!'
         });
         if(!confirm.isConfirmed) return;
 
-        showLoader(true);
+        await fetch(WEB_APP_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'deleteStudent', id: stdId })
+        });
+        loadStudents();
+    }
+
+    async function deleteRoom(name) {
+        const confirm = await Swal.fire({
+            title: 'ลบห้องเรียน ' + name + '?',
+            text: "รายชื่อนักเรียนทั้งหมดในห้องนี้จะถูกลบออกด้วย!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'ยืนยันการลบ'
+        });
+        if(!confirm.isConfirmed) return;
+
         await fetch(WEB_APP_URL, {
             method: 'POST',
             body: JSON.stringify({ action: 'deleteRoom', roomName: name })
@@ -300,13 +341,14 @@
         if(currentRoom === name) {
             currentRoom = "";
             document.getElementById('currentRoomText').innerText = "กรุณาเลือกห้อง";
-            document.getElementById('studentTableBody').innerHTML = "";
+            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">กรุณาเลือกห้องเรียนเพื่อดูข้อมูล</td></tr>';
         }
     }
 
     // จัดการรูปภาพ (Base64)
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
+        if(!file) return;
         const reader = new FileReader();
         reader.onloadend = () => {
             base64Photo = reader.result.split(',')[1];
@@ -314,19 +356,6 @@
         };
         reader.readAsDataURL(file);
     });
-
-    // ค้นหา
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        const val = this.value.toLowerCase();
-        const rows = document.querySelectorAll('#studentTableBody tr');
-        rows.forEach(row => {
-            row.style.display = row.innerText.toLowerCase().includes(val) ? '' : 'none';
-        });
-    });
-
-    function showLoader(show) {
-        document.getElementById('loader').classList.toggle('d-none', !show);
-    }
 
     function logout() {
         localStorage.clear();
