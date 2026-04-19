@@ -329,6 +329,36 @@ async function confirmDeleteRoom(roomName) {
         }
     }
 }
+    function addNewRoom() {
+    Swal.fire({
+        title: 'เพิ่มห้องเรียนใหม่',
+        input: 'text',
+        inputLabel: 'ชื่อห้องเรียน (เช่น ปวส.1/1)',
+        showCancelButton: true,
+        inputValidator: (value) => {
+            if (!value) return 'กรุณากรอกชื่อห้องเรียน!';
+            
+            // ตรวจสอบกับปุ่มที่มีอยู่บนหน้าจอ ณ ตอนนั้น
+            const currentRooms = Array.from(document.querySelectorAll('.btn-room'))
+                                      .map(btn => btn.innerText.trim());
+            if (currentRooms.includes(value.trim())) {
+                return 'ห้องเรียนนี้มีอยู่แล้ว!';
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // ส่งข้อมูลไปบันทึกที่ Code.gs
+            google.script.run.withSuccessHandler(response => {
+                if(response.success) {
+                    Swal.fire('สำเร็จ', 'เพิ่มห้องเรียนเรียบร้อย', 'success');
+                    loadRooms(); // ฟังก์ชันโหลดรายการห้องใหม่
+                } else {
+                    Swal.fire('ผิดพลาด', response.message, 'error');
+                }
+            }).addRoom({ className: result.value, ... });
+        }
+    });
+}
 
 // === โหลดนักเรียน (จุดที่แก้ให้รูปภาพปรากฏ) ===
 async function loadStudentData(roomName) {
