@@ -133,7 +133,10 @@
                         </div>
                         <div class="mb-3">
                             <label class="small fw-bold">ชื่อ-นามสกุล</label>
-                            <input type="text" id="studentName" class="form-control rounded-pill" required>
+                            <input type="text" id="studentName" class="form-control rounded-pill" required
+                               pattern="^[a-zA-Zก-ฮะ-์\s]+$" 
+                               oninput="this.value = this.value.replace(/[0-9]/g, '')"
+                               title="กรุณากรอกเฉพาะตัวอักษรเท่านั้น">
                         </div>
                         <div class="mb-3">
                             <label class="small fw-bold">รูปภาพนักเรียน</label>
@@ -369,6 +372,11 @@ async function loadStudentData(roomName) {
 async function submitStudentForm() {
     const id = document.getElementById('studentId').value;
     const name = document.getElementById('studentName').value;
+    // ตรวจสอบว่าชื่อมีตัวเลขปนอยู่หรือไม่
+    const nameRegex = /\d/; // เช็คว่ามีตัวเลข (0-9) ไหม
+    if (nameRegex.test(name)) {
+        return Swal.fire('รูปแบบชื่อไม่ถูกต้อง', 'ชื่อ-นามสกุล ห้ามมีตัวเลขประกอบ', 'error');
+    }
     if(!id || !name) return Swal.fire('ข้อมูลไม่ครบ', '', 'warning');
 
     Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
