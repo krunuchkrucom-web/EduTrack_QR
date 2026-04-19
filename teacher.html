@@ -395,16 +395,16 @@ async function saveRoomToSheet() {
 async function confirmDeleteRoom(roomName) {
     const result = await Swal.fire({
         title: `ยืนยันการลบห้อง ${roomName}?`,
-        text: "ข้อมูลนักเรียนทั้งหมดในห้องนี้จะหายไป!",
+        text: "ข้อมูลนักเรียนทั้งหมดในห้องนี้จะถูกลบถาวร!",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
-        confirmButtonText: 'ลบเลย',
+        confirmButtonText: 'ยืนยันการลบ',
         cancelButtonText: 'ยกเลิก'
     });
 
     if (result.isConfirmed) {
-        Swal.fire({ title: 'กำลังลบ...', didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'กำลังดำเนินการ...', didOpen: () => Swal.showLoading() });
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
@@ -413,14 +413,19 @@ async function confirmDeleteRoom(roomName) {
             const res = await response.json();
             if (res.success) {
                 Swal.fire('ลบสำเร็จ!', '', 'success');
-                loadRooms();
+                
+                // หากห้องที่ลบคือห้องที่กำลังเปิดดูอยู่ ให้เคลียร์หน้าจอ
                 if (currentRoomId === roomName) {
-                    document.getElementById('student-list-table').innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">กรุณาเลือกห้องเรียนเพื่อดูข้อมูล</td></tr>';
+                    currentRoomId = ""; // เคลียร์ ID ห้องปัจจุบัน
                     document.getElementById('current-room-display').innerText = "กรุณาเลือกห้อง";
-                    currentRoomId = "";
+                    document.getElementById('student-list-table').innerHTML = 
+                        '<tr><td colspan="5" class="text-center text-muted py-5">กรุณาเลือกห้องเรียนเพื่อดูข้อมูล</td></tr>';
                 }
+                loadRooms(); // โหลดรายการปุ่มห้องเรียนใหม่
             }
-        } catch (e) { Swal.fire('ผิดพลาด', 'ลบไม่สำเร็จ', 'error'); }
+        } catch (e) { 
+            Swal.fire('ผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error'); 
+        }
     }
 }
 
