@@ -76,6 +76,10 @@
                         </div>
                     </div>
                 </div>
+                <div id="adminCards" class="row mb-4" style="display: none;"> <div class="col-md-6">
+        <div class="card card-custom bg-card-student p-4" data-bs-toggle="modal" data-bs-target="#studentModal">
+            </div>
+    </div>
                 <div class="col-md-6">
                     <div class="card card-custom bg-card-room p-4" data-bs-toggle="modal" data-bs-target="#roomModal">
                         <div class="d-flex align-items-center">
@@ -186,7 +190,11 @@
     let base64Photo = "";
 
     document.getElementById('userDisplay').innerText = userData.name;
-
+    if (userData.role === 'admin') {
+        document.getElementById('adminCards').style.display = 'flex';
+    } else {
+        document.getElementById('adminCards').style.display = 'none';
+    }
     // 1. ดึงข้อมูลห้องเรียนทันทีที่เปิดหน้า
     window.onload = loadRooms;
 
@@ -210,6 +218,10 @@
         container.innerHTML = rooms.length ? "" : '<small class="text-muted">คุณยังไม่มีห้องเรียนที่รับผิดชอบ</small>';
         
         rooms.forEach(room => {
+            const deleteRoomBtn = userData.role === 'admin' ? `
+        <button class="btn ${room.color} btn-room-del" onclick="deleteRoom('${room.name}')">
+            <i class="fas fa-trash-alt"></i>
+        </button>` : '';
                 container.innerHTML += `
                     <div class="room-btn-group shadow-sm rounded-3 overflow-hidden">
                         <button class="btn ${room.color} btn-room-main" onclick="selectRoom('${room.name}')">
@@ -243,6 +255,17 @@
             tbody.innerHTML = students.length ? "" : '<tr><td colspan="5" class="text-center py-4">ไม่พบรายชื่อนักเรียนในห้องนี้</td></tr>';
             
             students.forEach(s => {
+            // เช็คสิทธิ์ Admin ตรงนี้
+            const adminControls = userData.role === 'admin' ? `
+                <td class="text-end">
+                    <button class="btn btn-sm btn-outline-primary border-0 me-1" onclick="editStudent('${s.id}', '${s.name}', '${s.photo}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteStudent('${s.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>` : '<td class="text-end text-muted small">View Only</td>';
+                
                 tbody.innerHTML += `
                     <tr>
                         <td class="fw-bold">${s.num}</td>
