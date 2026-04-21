@@ -61,6 +61,93 @@ async function selectRoom(name) {
                     </td>
                 </tr>`;
         });
+        // ฟังก์ชันปริ้นเฉพาะคนที่เลือก
+function printSingleQR() {
+    const name = document.getElementById('qrName').innerText;
+    const id = document.getElementById('qrId').innerText;
+    const canvasImg = document.querySelector('#canvasQR img');
+    
+    if (!canvasImg) {
+        alert("กรุณาสร้าง QR Code ก่อนสั่งปริ้น");
+        return;
+    }
+
+    const qrImg = canvasImg.src;
+    const printArea = document.getElementById('printSection');
+    printArea.innerHTML = `
+        <div style="text-align:center; padding-top: 50px;">
+            <h2 style="margin-bottom:20px;">QR Code สำหรับนักเรียน</h2>
+            <div class="qr-card-print" style="border: 2px solid #333; display:inline-block; padding:30px; border-radius:15px;">
+                <img src="${qrImg}" style="width: 300px;">
+                <h2 style="margin-top:20px; font-size: 28px;">${name}</h2>
+                <h3 style="color:#666;">รหัสนักเรียน: ${id.replace('ID: ', '')}</h3>
+            </div>
+        </div>
+    `;
+    window.print();
+}
+
+// ฟังก์ชันปริ้นทั้งห้อง
+async function printAllRoom() {
+    if (!currentRoom) return;
+    
+    const printArea = document.getElementById('printSection');
+    // ล้างหน้าปริ้นเก่าและเตรียมหัวข้อ
+    printArea.innerHTML = `
+        <div style="padding: 20px;">
+            <h2 style="text-align:center; margin-bottom:30px;">ชุด QR Code ทั้งห้องเรียน: ${currentRoom}</h2>
+            <div id="printGrid" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;"></div>
+        </div>
+    `;
+    const grid = printArea.querySelector('#printGrid');
+
+    // แสดง Loading ระหว่างเตรียมข้อมูล
+    const originalText = document.getElementById('btnPrintAll').innerHTML;
+    document.getElementById('btnPrintAll').innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังเตรียมไฟล์...';
+
+    try {
+        const res = await fetch(WEB_APP_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'getStudentsByRoom', room: currentRoom })
+        });
+        const students = await res.json();
+
+        for (const s of students) {
+            const div = document.createElement('div');
+            div.className = 'qr-card-print';
+            div.style = "width: 180px; border: 1px solid #ccc; padding: 15px; text-align: center; border-radius: 10px; background: white;";
+            div.innerHTML = `
+                <div id="tempQR_${s.id}" style="display: flex; justify-content: center;"></div>
+                <div style="font-weight:bold; margin-top:10px; font-size: 14px;">${s.name}</div>
+                <div style="font-size:12px; color: #555;">ID: ${s.id}</div>
+            `;
+            grid.appendChild(div);
+
+            new QRCode(document.getElementById(`tempQR_${s.id}`), {
+                text: s.id,
+                width: 140,
+                height: 140
+            });
+        }
+
+        // คืนค่าปุ่ม
+        document.getElementById('btnPrintAll').innerHTML = originalText;
+
+        // สั่งปริ้น
+        setTimeout(() => {
+            window.print();
+        }, 1000);
+
+    } catch (e) {
+        console.error(e);
+        alert("ไม่สามารถเตรียมข้อมูลปริ้นได้");
+    }
+}
+        // เมื่อโหลดนักเรียนเสร็จแล้ว ให้เปิดใช้งานปุ่มปริ้นทั้งห้อง
+        const btnPrintAll = document.getElementById('btnPrintAll');
+        if (btnPrintAll) {
+            btnPrintAll.disabled = false;
+        }
     } catch (e) { 
         tbody.innerHTML = '<tr><td colspan="3" class="text-danger text-center py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>'; 
     }
