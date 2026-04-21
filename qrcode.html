@@ -17,6 +17,27 @@
         .logout-link { color: #dc3545; margin-top: 50px; display: block; text-decoration: none; padding: 12px 15px; }
         .qr-placeholder { width: 200px; height: 200px; border: 2px dashed #ddd; border-radius: 15px; display: flex; align-items: center; justify-content: center; }
         #canvasQR img { margin: 0 auto; border-radius: 10px; }
+    @media print {
+    body * { visibility: hidden; } /* ซ่อนทุกอย่าง */
+    #printSection, #printSection * { visibility: visible; } /* แสดงเฉพาะส่วนที่จะปริ้น */
+    #printSection {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        display: block !important;
+    }
+    .qr-card-print {
+        display: inline-block;
+        width: 180px;
+        text-align: center;
+        border: 1px solid #eee;
+        padding: 15px;
+        margin: 10px;
+        border-radius: 10px;
+    }
+}
+        
     </style>
 </head>
 <body>
@@ -72,11 +93,35 @@
                             </div>
                             <div id="canvasQR"></div>
                         </div>
-                        <h5 id="qrName" class="fw-bold mt-2">-</h5>
-                        <p id="qrId" class="text-muted">-</p>
-                        <button class="btn btn-success w-100 rounded-pill mt-3 py-2" id="btnDl" onclick="downloadQR()" disabled>
-                            <i class="fas fa-download me-2"></i> ดาวน์โหลดภาพ QR Code
-                        </button>
+<div class="col-md-7">
+    <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0 text-secondary">2. เลือกนักเรียน (ห้อง: <span id="currentRoomText" class="fw-bold text-primary">-</span>)</h6>
+            <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="printAllRoom()" id="btnPrintAll" disabled>
+                <i class="fas fa-print me-1"></i> ปริ้นทั้งห้อง
+            </button>
+        </div>
+        </div>
+</div>
+
+<div class="col-md-5 text-center">
+    <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+        <div class="row g-2 mt-3">
+            <div class="col-6">
+                <button class="btn btn-success w-100 rounded-pill py-2" id="btnDl" onclick="downloadQR()" disabled>
+                    <i class="fas fa-download"></i> ดาวน์โหลด
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-dark w-100 rounded-pill py-2" id="btnPrintSingle" onclick="printSingleQR()" disabled>
+                    <i class="fas fa-print"></i> ปริ้นภาพนี้
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="printSection" style="display: none;"></div>
                     </div>
                 </div>
             </div>
