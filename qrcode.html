@@ -1,0 +1,60 @@
+<div class="col-md-10 p-4">
+    <h5 class="mb-4">ยินดีต้อนรับ, <span id="userDisplay" class="text-primary fw-bold">admin</span> 👏</h5>
+
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-primary text-white">
+        <div class="d-flex align-items-center">
+            <div class="bg-white bg-opacity-25 rounded-circle p-3 me-3">
+                <i class="fas fa-qrcode fa-2x"></i>
+            </div>
+            <div>
+                <h4 class="mb-0">สร้าง QR Code สำหรับนักเรียน</h4>
+                <p class="mb-0 opacity-75">เลือกห้องเรียนและนักเรียนเพื่อสร้าง QR Code สำหรับเช็คชื่อและส่งงาน</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h6 class="mb-3 text-secondary"><i class="fas fa-graduation-cap me-2"></i>1. เลือกห้องเรียน</h6>
+        <div id="roomContainerQR" class="d-flex flex-wrap">
+            </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                <h6 class="mb-3 text-secondary"><i class="fas fa-users me-2"></i>2. เลือกนักเรียน (ห้อง: <span id="selectedRoomText">-</span>)</h6>
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>รหัส</th>
+                                <th>ชื่อ-นามสกุล</th>
+                                <th>จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentListQR">
+                            <tr><td colspan="3" class="text-center py-5 text-muted">กรุณาเลือกห้องเรียน</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100 text-center">
+                <h6 class="mb-3 text-secondary text-start"><i class="fas fa-eye me-2"></i>3. ตัวอย่าง QR Code</h6>
+                <div id="qrcodeArea" class="py-4 d-flex flex-column align-items-center justify-content-center">
+                    <div class="p-3 border rounded-4 bg-light mb-3" style="width: 220px; height: 220px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-qrcode fa-5x text-muted opacity-25" id="placeholderQR"></i>
+                        <div id="canvasQR"></div>
+                    </div>
+                    <h5 id="qrStudentName" class="fw-bold mb-1">-</h5>
+                    <p id="qrStudentId" class="text-muted small mb-3">-</p>
+                    <button class="btn btn-success rounded-pill px-4" onclick="downloadQR()" id="btnDownload" disabled>
+                        <i class="fas fa-download me-2"></i> ดาวน์โหลด QR Code
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
