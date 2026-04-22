@@ -152,3 +152,25 @@ function switchScannerMode(mode) {
         settings.style.display = 'none';
     }
 }
+
+function startScanner() {
+    const html5QrCode = new Html5Qrcode("reader"); // "reader" คือ ID ของ <div> ที่จะโชว์กล้อง
+    html5QrCode.start(
+        { facingMode: "environment" }, 
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+            // เมื่อสแกนเจอ QR Code
+            console.log("QR Code detected:", decodedText);
+            
+            // เตรียมข้อมูลส่งไปฐานข้อมูล
+            const data = {
+                studentId: decodedText,
+                type: document.getElementById('btn-mode-att').classList.contains('btn-primary') ? 'เช็คชื่อ' : 'ส่งงาน',
+                score: document.getElementById('max-score')?.value || 0
+            };
+            
+            saveToSheet(data); // เรียกฟังก์ชันส่งลง Sheet
+            html5QrCode.stop(); // หยุดกล้องชั่วคราว
+        }
+    );
+}
