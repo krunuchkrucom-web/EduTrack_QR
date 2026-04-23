@@ -1,17 +1,16 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxt5rndbk6Gw4d-opv4CHRRliB6K84awMxtSPJm5qTr5yPhjdZhllISfrR-zGlV3Tsgsw/exec";
-let currentSelectedRole = "";
-let html5QrCode = null;
+let currentSelectedRole = ""; 
 
-// 1. ระบบ Role Selection
 function selectRole(role) {
-    currentSelectedRole = role;
+    currentSelectedRole = role; // 'Student' หรือ 'Teacher'
     document.getElementById('role-view').style.setProperty('display', 'none', 'important');
-    const loginView = document.getElementById('login-view');
-    loginView.style.setProperty('display', 'flex', 'important');
+    document.getElementById('login-view').style.setProperty('display', 'flex', 'important');
     
     const badge = document.getElementById('role-badge');
-    badge.innerText = (role === 'Student') ? "บทบาท: นักเรียน" : "บทบาท: ผู้สอน";
-    badge.className = (role === 'Student') ? "badge rounded-pill bg-info text-white px-3 py-2" : "badge rounded-pill bg-warning text-dark px-3 py-2";
+    if (badge) {
+        badge.innerText = (role === 'Student') ? "สถานะ: นักเรียน" : "สถานะ: ผู้สอน";
+        badge.className = (role === 'Student') ? "badge rounded-pill bg-info text-white px-3 py-2 shadow-sm" : "badge rounded-pill bg-warning text-dark px-3 py-2 shadow-sm";
+    }
 }
 
 function backToRole() {
@@ -19,93 +18,137 @@ function backToRole() {
     document.getElementById('login-view').style.setProperty('display', 'none', 'important');
 }
 
-// 2. ระบบ Login
 async function handleLogin() {
-    const user = document.getElementById('username').value.trim();
-    const pass = document.getElementById('password').value.trim();
+    const userEl = document.getElementById('username');
+    const passEl = document.getElementById('password');
+    const user = userEl.value.trim();
+    const pass = passEl.value.trim();
 
     if (!user || !pass) {
-        Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอก Username และ Password', 'warning');
+        Swal.fire('คำเตือน', 'กรุณากรอกข้อมูลให้ครบ', 'warning');
         return;
     }
-
+    
     document.getElementById('loader').style.display = 'flex';
-
+    
     try {
-        // จำลองการเชื่อมต่อ API (แทนที่ด้วยโค้ด fetch จริงของคุณได้)
-        setTimeout(() => {
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('login-view').style.setProperty('display', 'none', 'important');
-            document.getElementById('main-view').style.display = 'block';
-            document.getElementById('user-display-name').innerText = user;
-            showDashboard(); // ไปที่หน้าแรกหลัง Login
-        }, 1000);
+        const response = await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'login', user: user, pass: pass }) 
+        });
+        const json = await response.json();
+        
+        document.getElementById('loader').style.display = 'none';
+        
+        if (json.success) {
+            // เช็คตัวพิมพ์ใหญ่-เล็กให้ตรงกับใน Google Sheets
+            if (json.role.toLowerCase() !== currentSelectedRole.toLowerCase()) {
+                Swal.fire('ผิดพลาด', `บัญชีนี้ไม่ใช่สิทธิ์ ${currentSelectedRole}`, 'error');
+                return;
+            }
+            
+            localStorage.setItem('auth', JSON.stringify(json));
+            
+            if (json.role.toLowerCase() === 'teacher') {
+                window.location.href = 'teacher.html';
+            } else {
+                window.location.href = 'student.html';
+            }
+        } else {
+            Swal.fire('ล้มเหลว', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'error');
+        }
     } catch (err) {
         document.getElementById('loader').style.display = 'none';
         Swal.fire('Error', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
     }
 }
 
-// 3. ระบบ Sidebar Navigation
-function updateActiveMenu(el) {
-    if (html5QrCode) { // หยุดกล้องถ้ามีการเปลี่ยนหน้า
-        html5QrCode.stop().catch(() => {});
+// ฟังก์ชันสำหรับแสดงหน้าสแกน
+function showScanner(element) {
+    // 1. จัดการแถบเมนู (Sidebar) ให้ขึ้นสีไฮไลท์ที่เมนูที่เลือก
+    if (element) {
+        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+        element.classList.add('active');
     }
-    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-    if(el) el.classList.add('active');
-}
+    
+    // 2. เปลี่ยนหัวข้อบน Header ของหน้าเว็บ
+    const headerTitle = document.getElementById('header-title');
+    if (headerTitle) headerTitle.innerText = "สแกนเข้าเรียนและส่งงานอัจฉริยะ";
 
-function showDashboard(el) {
-    updateActiveMenu(el);
-    document.getElementById('header-title').innerText = "Dashboard Overview";
-    document.getElementById('content-area').innerHTML = `
-        <div class="row g-4">
-            <div class="col-md-4"><div class="card p-4 border-0 shadow-sm rounded-4 text-center"><h5>จำนวนนักเรียน</h5><h2 class="text-primary fw-bold">45</h2></div></div>
-            <div class="col-md-4"><div class="card p-4 border-0 shadow-sm rounded-4 text-center"><h5>มาเรียนวันนี้</h5><h2 class="text-success fw-bold">42</h2></div></div>
-            <div class="col-md-4"><div class="card p-4 border-0 shadow-sm rounded-4 text-center"><h5>ยังไม่ส่งงาน</h5><h2 class="text-danger fw-bold">3</h2></div></div>
-        </div>
-    `;
-}
-
-function showScanner(el) {
-    updateActiveMenu(el);
-    document.getElementById('header-title').innerText = "Smart Scanner System";
-    document.getElementById('content-area').innerHTML = `
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card border-0 shadow-lg rounded-5 overflow-hidden bg-dark position-relative" style="aspect-ratio: 1/1;">
-                    <div id="reader" style="width: 100%; height: 100%;"></div>
-                    <div class="scanner-line"></div>
+    // 3. เปลี่ยนเนื้อหาในพื้นที่แสดงผลหลัก (content-area)
+    const contentArea = document.getElementById('content-area');
+    contentArea.innerHTML = `
+        <div class="row g-4 animate__animated animate__fadeIn">
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-sliders-h me-2 text-primary"></i> ตั้งค่าโหมด</h6>
+                    <div class="btn-group w-100 p-1 bg-light rounded-pill mb-4">
+                        <button class="btn btn-primary rounded-pill btn-sm fw-bold" id="mode-att" onclick="switchScannerMode('attendance')">เช็คชื่อ</button>
+                        <button class="btn btn-light rounded-pill btn-sm fw-bold" id="mode-ass" onclick="switchScannerMode('assignment')">ส่งงาน</button>
+                    </div>
+                    
+                    <div id="assignment-settings" style="display:none;">
+                        <div class="mb-3">
+                            <label class="small fw-bold text-muted">ชื่อใบงาน/งานที่ส่ง</label>
+                            <input type="text" id="task-name" class="form-control border-0 bg-light rounded-3" placeholder="ระบุชื่อใบงาน...">
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="small fw-bold text-muted">คะแนน</label>
+                                <input type="number" id="max-score" class="form-control border-0 bg-light rounded-3 text-center" value="10">
+                            </div>
+                            <div class="col-6">
+                                <label class="small fw-bold text-muted">หมดเวลา</label>
+                                <input type="time" class="form-control border-0 bg-light rounded-3">
+                            </div>
+                        </div>
+                        <button class="btn btn-success w-100 mt-3 rounded-pill fw-bold btn-sm" onclick="updateTask()">อัพเดทข้อมูลงาน</button>
+                    </div>
                 </div>
-                <div class="alert alert-primary mt-4 rounded-4 border-0 text-center fw-bold">
-                    <i class="fas fa-info-circle me-2"></i> กรุณาวางคิวอาร์โค้ดในกรอบเพื่อแสกน
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-lg rounded-5 overflow-hidden bg-dark position-relative" style="aspect-ratio: 1/1;">
+                    <div class="scanner-line"></div>
+                    <div class="d-flex flex-column justify-content-center align-items-center h-100 text-white opacity-50">
+                        <i class="fas fa-qrcode fa-4x mb-3"></i>
+                        <p>วาง QR Code ให้ตรงกรอบ</p>
+                    </div>
+                </div>
+                <div class="alert alert-info mt-3 rounded-4 border-0 shadow-sm d-flex align-items-center">
+                    <div class="spinner-grow spinner-grow-sm me-3 text-primary"></div>
+                    <span class="small">ระบบกำลังรอสัญญาณจากกล้อง...</span>
+                </div>
+            </div>
+
+            <div class="col-lg-3">
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold m-0">สแกนล่าสุด</h6>
+                        <span class="badge bg-primary-soft text-primary rounded-pill px-2">Live</span>
+                    </div>
+                    <div id="scan-log" class="overflow-auto" style="max-height: 400px;">
+                        <div class="text-center py-5 text-muted small">ยังไม่มีข้อมูลการสแกน</div>
+                    </div>
                 </div>
             </div>
         </div>
     `;
-    
-    // เริ่มต้นกล้อง
-    html5QrCode = new Html5Qrcode("reader");
-    html5QrCode.start(
-        { facingMode: "environment" }, 
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
-            Swal.fire('สำเร็จ!', 'สแกนข้อมูล: ' + decodedText, 'success');
-        },
-        (errorMessage) => { /* scanning... */ }
-    ).catch(err => {
-        console.error("Camera Error: ", err);
-    });
 }
 
-function logout() {
-    Swal.fire({
-        title: 'ยืนยันการออกจากระบบ?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'ออก',
-        cancelButtonText: 'ยกเลิก'
-    }).then((result) => {
-        if (result.isConfirmed) location.reload();
-    });
+// ฟังก์ชันสำหรับสลับโหมดในหน้าสแกน
+function switchScannerMode(mode) {
+    const btnAtt = document.getElementById('mode-att');
+    const btnAss = document.getElementById('mode-ass');
+    const settings = document.getElementById('assignment-settings');
+    
+    if(mode === 'assignment') {
+        btnAss.classList.replace('btn-light', 'btn-primary');
+        btnAtt.classList.replace('btn-primary', 'btn-light');
+        settings.style.display = 'block';
+    } else {
+        btnAtt.classList.replace('btn-light', 'btn-primary');
+        btnAss.classList.replace('btn-primary', 'btn-light');
+        settings.style.display = 'none';
+    }
 }
