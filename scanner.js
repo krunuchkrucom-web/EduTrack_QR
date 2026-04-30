@@ -2,38 +2,38 @@
 let html5QrCode;
 let currentMode = 'attendance';
 let scanHistory = [];
-// ตรวจสอบให้มั่นใจว่า URL นี้เป็นตัวล่าสุดที่ Deploy จาก Google Apps Script
 const scriptURL = 'https://script.google.com/macros/s/AKfycbxcbhoYr1Yjjv4VDbsqx-66dYMmBg9tNn9_vAkXMoptD-nNoSYqvXAqrDyBuoSVBrP5Yg/exec';
 
-// เริ่มทำงานเมื่อโหลดหน้าจอ
 window.onload = () => {
     initScanner();
 };
 
-// ฟังก์ชันเปิดกล้อง
-function initScanner() {
-    // 1. ตรวจสอบว่ามีอุปกรณ์กล้องตัวไหนว่างบ้าง
+// ฟังก์ชันเปิดกล้อง - ปรับปรุงการเลือกกล้องหลังอัตโนมัติ
+async function initScanner() {
+    if (html5QrCode) {
+        try { await html5QrCode.clear(); } catch (e) { console.log(e); }
+    }
+
     Html5Qrcode.getCameras().then(devices => {
         if (devices && devices.length > 0) {
-            // สร้างอินสแตนซ์ scanner
             html5QrCode = new Html5Qrcode("reader");
             
-            // เลือกใช้กล้องตัวแรกที่ระบบหาเจอ (สำหรับ Notebook/PC คือกล้องหน้า)
-            const cameraId = devices[0].id; 
-            
+            // พยายามหาเลนส์หลัง (environment) ถ้าไม่เจอให้ใช้ตัวแรก
+            let cameraId = devices[0].id;
+            const backCamera = devices.find(device => 
+                device.label.toLowerCase().includes('back') || 
+                device.label.toLowerCase().includes('environment')
+            );
+            if (backCamera) cameraId = backCamera.id;
+
             const config = { 
                 fps: 10, 
                 qrbox: { width: 250, height: 250 },
                 aspectRatio: 1.0 
             };
 
-            // เริ่มการทำงานด้วย ID ของกล้องที่หาเจอ
-            html5QrCode.start(
-                cameraId, 
-                config, 
-                onScanSuccess
-            ).catch(err => {
-                // กรณีเริ่มกล้องไม่ได้ (เช่น โปรแกรมอื่นจองอยู่)
+            html5QrCode.start(cameraId, config, onScanSuccess)
+            .catch(err => {
                 document.getElementById('statusLabel').innerText = "กล้องถูกใช้งานโดยโปรแกรมอื่น";
                 console.error(err);
             });
@@ -49,20 +49,21 @@ function initScanner() {
 function onScanSuccess(decodedText, decodedResult) {
     html5QrCode.pause();
     
+    // ดึงค่าจากหน้า UI
     const className = document.getElementById('classSelect').value;
     const workName = document.getElementById('workTitle').value;
     const score = document.getElementById('fullScore').value;
     const timeStatus = document.getElementById('timeStatus').value;
 
     const studentData = {
-        action: 'recordScan', // *** ต้องแก้ให้ตรงกับใน code.gs ***
+        action: 'recordScan', 
         id: decodedText,
         mode: currentMode,
         room: className,
         workName: currentMode === 'assignment' ? workName : 'เช็คชื่อเข้าเรียน',
         score: currentMode === 'assignment' ? score : '-',
         status: timeStatus,
-        admin: "Teacher Admin", // หรือดึงชื่อจาก Session Login
+        admin: "Teacher Admin",
         timestamp: new Date().toISOString()
     };
 
@@ -79,31 +80,34 @@ function showSuccessUI(id) {
     overlay.classList.remove('hidden');
     overlay.classList.add('flex');
 
-    // ซ่อน Overlay และเริ่มสแกนต่อหลังจาก 2 วินาที
     setTimeout(() => {
         overlay.classList.add('hidden');
         overlay.classList.remove('flex');
-        // ตรวจสอบว่ายังมี Object อยู่ก่อน resume
         if(html5QrCode) html5QrCode.resume();
     }, 2000);
 }
 
-// บันทึกข้อมูลลง Google Sheet
+// บันทึกข้อมูลลง Google Sheet - ปรับปรุงการส่งข้อมูลให้เข้ากับ Apps Script ได้ดีขึ้น
 function saveToSheet(studentData) {
     updateScanHistory(studentData);
 
-    // ใช้ URLSearchParams หรือส่งแบบ JSON ให้ถูกตามที่ Script รอรับ
+    // ใช้ URLSearchParams เพื่อความเสถียรสูงสุดในการส่งแบบ POST ไปยัง Apps Script
+    const formData = new URLSearchParams();
+    for (const key in studentData) {
+        formData.append(key, studentData[key]);
+    }
+
     fetch(scriptURL, {
         method: 'POST',
-        mode: 'no-cors', // สำคัญมากสำหรับ Google Apps Script
+        mode: 'no-cors', 
         cache: 'no-cache',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: JSON.stringify(studentData)
+        body: formData.toString()
     })
     .then(() => {
-        console.log('ส่งข้อมูลเรียบร้อย');
+        console.log('ส่งข้อมูลเข้าคิวเรียบร้อย');
     })
     .catch(error => {
         console.error('Error:', error);
@@ -140,7 +144,6 @@ function updateScanHistory(data) {
 
     logContainer.insertBefore(newLog, logContainer.firstChild);
     
-    // อัปเดตตัวเลขจำนวนคน
     scanHistory.push(data);
     document.getElementById('scanCount').innerText = `${scanHistory.length}/40`;
     
