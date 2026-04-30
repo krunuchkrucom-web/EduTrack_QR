@@ -30,33 +30,26 @@ function initScanner() {
 
 // เมื่อสแกนติด
 function onScanSuccess(decodedText, decodedResult) {
-    // หยุดการสแกนชั่วคราวเพื่อประมวลผล
     html5QrCode.pause();
     
-    // ดึงค่าจากการตั้งค่าหน้าเว็บ
     const className = document.getElementById('classSelect').value;
     const workName = document.getElementById('workTitle').value;
     const score = document.getElementById('fullScore').value;
     const timeStatus = document.getElementById('timeStatus').value;
 
-    // เตรียมข้อมูลให้ตรงกับที่ code.gs รอรับ
     const studentData = {
-        action: 'logQRGenerated', // เพิ่ม action เพื่อบอก Server ว่าให้บันทึกลง Log
-        id: decodedText,           // ใช้คีย์ 'id' ตามใน code.gs
-        name: "นักเรียนรหัส " + decodedText, // กรณีไม่มีฐานข้อมูลชื่อในตัวแปรนี้
-        room: className,
+        action: 'recordScan', // *** ต้องแก้ให้ตรงกับใน code.gs ***
+        id: decodedText,
         mode: currentMode,
+        room: className,
         workName: currentMode === 'assignment' ? workName : 'เช็คชื่อเข้าเรียน',
         score: currentMode === 'assignment' ? score : '-',
         status: timeStatus,
-        admin: 'System Scanner', // หรือดึงชื่อครูจากระบบ Login
-        timestamp: new Date().toISOString() // ส่ง ISO Format ไปเพื่อให้ Spreadsheet จัดการง่าย
+        admin: "Teacher Admin", // หรือดึงชื่อจาก Session Login
+        timestamp: new Date().toISOString()
     };
 
-    // แสดง Overlay สำเร็จ
     showSuccessUI(decodedText);
-    
-    // บันทึกข้อมูล
     saveToSheet(studentData);
 }
 
