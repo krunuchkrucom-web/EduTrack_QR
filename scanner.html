@@ -261,15 +261,31 @@
             document.getElementById('scanCount').innerText = scanHistory.length + "/40";
         }
 
-        function initScanner() {
-            scanner = new Html5QrcodeScanner("reader", { 
-                fps: 10, 
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0
-            });
-            scanner.render(onScanSuccess);
-            document.getElementById('statusLabel').innerText = "กล้องพร้อมทำงาน";
+function initScanner() {
+    scanner = new Html5QrcodeScanner("reader", { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+    });
+    
+    scanner.render(onScanSuccess, (errorMessage) => {
+        // หากต้องการดู Log ข้อผิดพลาดใน Console
+        // console.warn(errorMessage);
+    });
+
+    // ดักจับกรณีหาอุปกรณ์ไม่เจอ
+    Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length > 0) {
+            document.getElementById('statusLabel').innerText = "ตรวจพบกล้อง " + cameras.length + " ตัว";
+        } else {
+            document.getElementById('statusLabel').innerText = "ไม่พบอุปกรณ์กล้องในเครื่องนี้";
+            document.getElementById('statusLabel').className = "text-red-600 font-bold";
         }
+    }).catch(err => {
+        document.getElementById('statusLabel').innerText = "ไม่สามารถเข้าถึงกล้องได้ (NotFoundError)";
+        document.getElementById('statusLabel').className = "text-red-600 font-bold";
+    });
+}
 
         function restartScanner() {
             location.reload();
