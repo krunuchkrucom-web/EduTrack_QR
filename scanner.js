@@ -80,22 +80,24 @@ function showSuccessUI(id) {
 
 // บันทึกข้อมูลลง Google Sheet
 function saveToSheet(studentData) {
-    // แสดงประวัติทันที (Optimistic Update)
     updateScanHistory(studentData);
 
+    // ใช้ URLSearchParams หรือส่งแบบ JSON ให้ถูกตามที่ Script รอรับ
     fetch(scriptURL, {
         method: 'POST',
-        mode: 'no-cors', // สำคัญ: เพื่อเลี่ยงปัญหา CORS บน Browser บางตัว
+        mode: 'no-cors', // สำคัญมากสำหรับ Google Apps Script
         cache: 'no-cache',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify(studentData)
     })
     .then(() => {
-        console.log('Data sent to Server');
+        console.log('ส่งข้อมูลเรียบร้อย');
     })
     .catch(error => {
-        console.error('Error!', error.message);
-        Swal.fire('ผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+        console.error('Error:', error);
+        Swal.fire('การเชื่อมต่อมีปัญหา', 'ไม่สามารถส่งข้อมูลไปยัง Server ได้', 'error');
     });
 }
 
