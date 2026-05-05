@@ -206,118 +206,85 @@
             }
         }
 
-        async function onScanSuccess(decodedText) {
-            if (isProcessing) return; // ป้องกันการทำงานซ้อนกัน
-            isProcessing = true;
+async function onScanSuccess(decodedText) {
+    if (isProcessing) return;
+    isProcessing = true;
 
-            const statusLabel = document.getElementById('statusLabel');
-            
-            // 1. หยุดสแกนและปิดกล้องทันที
-            try {
-                await html5QrCode.stop();
-                statusLabel.innerText = "บันทึกแล้ว (กล้องปิด)";
-            } catch (err) {
-                console.error("Camera Stop Error:", err);
-            }
+    const statusLabel = document.getElementById('statusLabel');
+    
+    // 1. หยุดสแกนชั่วคราว (Pause) แทนการ Stop เพื่อไม่ให้กล้องค้าง
+    try {
+        await html5QrCode.pause(true); 
+        statusLabel.innerText = "กำลังบันทึกข้อมูล...";
+    } catch (err) {
+        console.error(err);
+    }
 
-            // 2. แสดง UI แจ้งเตือนสแกนสำเร็จ
-            showOverlay("บันทึกข้อมูล...", decodedText);
+    // 2. แสดง UI แจ้งเตือน
+    showOverlay("บันทึกสำเร็จ", decodedText);
 
-            // 3. เตรียมข้อมูล
-            const className = document.getElementById('classSelect').value;
-            const workName = document.getElementById('workTitle').value;
-            const score = document.getElementById('fullScore').value;
-            const timeStatus = document.getElementById('timeStatus').value;
+    // 3. เตรียมข้อมูลให้ตรงกับหัวตารางใน Google Sheet (ตามรูปภาพของคุณ)
+    // ในรูปตาราง Attendance มี Timestamp, Date, ID, Subject_ID, Status
+    // ในรูปตาราง Submissions มี Timestamp, ID, Subject_ID, Assignment_Name, File_URL, Score, Status
+    
+    const payload = {
+        action: 'recordScan',
+        id: decodedText,
+        mode: currentMode,
+        subjectId: "CS101", // ปรับให้ตรงกับวิชาในตาราง Subjects
+        assignmentName: document.getElementById('workTitle').value,
+        score: document.getElementById('fullScore').value,
+        status: document.getElementById('timeStatus').value,
+        admin: 'Teacher Admin'
+    };
 
-            const payload = {
-                action: 'recordScan',
-                id: decodedText,
-                mode: currentMode,
-                room: className,
-                workName: currentMode === 'assignment' ? workName : 'เช็คชื่อเข้าเรียน',
-                score: currentMode === 'assignment' ? score : '-',
-                status: timeStatus,
-                admin: 'Teacher Admin'
-            };
+    // 4. ส่งข้อมูล
+    const formData = new URLSearchParams();
+    for (const key in payload) formData.append(key, payload[key]);
 
-            // 4. ส่งข้อมูลลง Google Sheet (ใช้ no-cors เพื่อความเร็ว)
-            try {
-                const formData = new URLSearchParams();
-                for (const key in payload) formData.append(key, payload[key]);
+    fetch(WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: formData
+    }).then(() => {
+        addToLog(decodedText, "Success");
+        
+        // 5. ใช้ SweetAlert แจ้งเพื่อให้ User กดเริ่มใหม่เอง ลดอาการกล้องค้าง
+        Swal.fire({
+            title: 'บันทึกสำเร็จ!',
+            text: 'รหัส ' + decodedText + ' เรียบร้อยแล้ว',
+            icon: 'success',
+            confirmButtonText: 'สแกนต่อไป',
+            timer: 2000,
+            timerProgressBar: true
+        }).then(() => {
+            resumeScanner(); // เรียกฟังก์ชันเปิดรับสแกนต่อ
+        });
+    }).catch(err => {
+        isProcessing = false;
+        html5QrCode.resume();
+        Swal.fire('ผิดพลาด', 'บันทึกไม่สำเร็จ', 'error');
+    });
+}
 
-                fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: formData
-                });
+// ฟังก์ชันกลับมาสแกนต่อ (ไม่ต้องโหลดกล้องใหม่)
+function resumeScanner() {
+    isProcessing = false;
+    hideOverlay();
+    if (html5QrCode) {
+        html5QrCode.resume();
+        document.getElementById('statusLabel').innerText = "พร้อมสแกน...";
+    }
+}
 
-                // เพิ่มเข้าประวัติ (UI)
-                addToLog(decodedText, "Success");
-
-                // 5. รอสักครู่แล้วซ่อน Overlay (แต่ยังไม่เปิดกล้อง จนกว่าจะกดปุ่ม Restart)
-                setTimeout(() => {
-                    hideOverlay();
-                    Swal.fire({
-                        title: 'บันทึกสำเร็จ!',
-                        text: 'รหัส ' + decodedText + ' ถูกบันทึกลงระบบแล้ว',
-                        icon: 'success',
-                        confirmButtonText: 'สแกนคนต่อไป',
-                        confirmButtonColor: '#3b82f6'
-                    }).then((result) => {
-                        // เมื่อกดตกลง ให้เริ่มกล้องใหม่
-                        restartScanner();
-                    });
-                }, 1000);
-
-            } catch (error) {
-                console.error("Fetch Error:", error);
-                isProcessing = false;
-                Swal.fire('ผิดพลาด', 'บันทึกไม่สำเร็จ', 'error');
-            }
-        }
-
-        function showOverlay(msg, id = "") {
-            const overlay = document.getElementById('successOverlay');
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
-            document.getElementById('scannedName').innerText = "ID: " + id;
-        }
-
-        function hideOverlay() {
-            const overlay = document.getElementById('successOverlay');
-            overlay.classList.add('hidden');
-            overlay.classList.remove('flex');
-        }
-
-        function addToLog(id, status) {
-            const log = document.getElementById('activityLog');
-            const empty = document.getElementById('emptyLog');
-            if (empty) empty.remove();
-            
-            scanHistory.push({id, time: new Date().toLocaleTimeString(), status});
-            
-            const item = document.createElement('div');
-            item.className = "flex items-center p-3 bg-blue-50 rounded-xl border border-blue-100 animate-fadeIn";
-            item.innerHTML = `
-                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-blue-600 mr-3 shadow-sm"><i class="fas fa-user-check"></i></div>
-                <div class="flex-1">
-                    <p class="text-sm font-bold text-gray-800">${id}</p>
-                    <p class="text-[10px] text-gray-500">${new Date().toLocaleTimeString()} - ${currentMode === 'attendance' ? 'เข้าเรียน' : 'ส่งงาน'}</p>
-                </div>
-                <span class="text-[10px] font-bold text-green-500 bg-green-50 px-2 py-1 rounded-lg">สำเร็จ</span>`;
-            log.prepend(item);
-            document.getElementById('scanCount').innerText = scanHistory.length + "/40";
-        }
-
-        function restartScanner() {
-            const statusLabel = document.getElementById('statusLabel');
-            statusLabel.innerText = "กำลังรีสตาร์ทกล้อง...";
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => initScanner()).catch(() => initScanner());
-            } else {
-                initScanner();
-            }
-        }
+// ปรับปุ่ม Restart ให้ทำงานเร็วขึ้น
+function restartScanner() {
+    if (html5QrCode && html5QrCode.getState() === 3) { // ถ้า Pause อยู่
+        resumeScanner();
+    } else {
+        location.reload(); // ถ้ากล้องตายจริงๆ ให้รีเฟรช
+    }
+}
 
         function logout() { 
             localStorage.clear(); 
