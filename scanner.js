@@ -91,12 +91,14 @@ function showSuccessUI(id) {
 function saveToSheet(studentData) {
     updateScanHistory(studentData);
 
-    // ใช้ URLSearchParams เพื่อความเสถียรสูงสุดในการส่งแบบ POST ไปยัง Apps Script
+    // ใช้ URLSearchParams สำหรับการส่งแบบ Form-urlencoded
     const formData = new URLSearchParams();
     for (const key in studentData) {
         formData.append(key, studentData[key]);
     }
 
+    // แก้ไข: เปลี่ยนการจัดการ Response เพราะโหมด no-cors จะอ่านค่าตอบกลับไม่ได้ 
+    // เราจึงต้องใช้ setTimeout หรือย้าย Logic ไปไว้ที่ .then เลยเพื่อปลดล็อคหน้าจอ
     fetch(scriptURL, {
         method: 'POST',
         mode: 'no-cors', 
@@ -107,11 +109,14 @@ function saveToSheet(studentData) {
         body: formData.toString()
     })
     .then(() => {
-        console.log('ส่งข้อมูลเข้าคิวเรียบร้อย');
+        console.log('Data sent successfully');
+        // ไม่ต้องรออ่าน JSON เพราะ no-cors อ่านไม่ได้ ให้ถือว่าสำเร็จและไปต่อเลย
+        document.getElementById('statusLabel').innerText = "บันทึกสำเร็จ! พร้อมสแกนต่อ";
     })
     .catch(error => {
         console.error('Error:', error);
-        Swal.fire('การเชื่อมต่อมีปัญหา', 'ไม่สามารถส่งข้อมูลไปยัง Server ได้', 'error');
+        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อ Server ได้', 'error');
+        if(html5QrCode) html5QrCode.resume();
     });
 }
 
