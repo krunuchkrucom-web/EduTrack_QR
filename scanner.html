@@ -22,7 +22,6 @@
 </head>
 <body class="flex min-h-screen">
 
-    <!-- Sidebar -->
     <aside class="w-64 bg-white border-r hidden md:flex flex-col sticky top-0 h-screen">
         <div class="p-6 border-b">
             <div class="flex items-center space-x-3">
@@ -33,17 +32,14 @@
             </div>
         </div>
         <nav class="flex-1 p-4 space-y-1">
-            <a href="teacher.html" class="flex items-center p-3 text-gray-500 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition">
-                <i class="fas fa-users-cog w-8 text-lg"></i> จัดการนักเรียน
+            <a href="index.html" class="flex items-center p-3 text-gray-500 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition">
+                <i class="fas fa-home w-8 text-lg"></i> หน้าหลัก
             </a>
             <a href="qrcode.html" class="flex items-center p-3 text-gray-500 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition">
                 <i class="fas fa-qrcode w-8 text-lg"></i> สร้าง QR Code
             </a>
             <a href="scanner.html" class="flex items-center p-3 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-200">
                 <i class="fas fa-camera-retro w-8 text-lg"></i> สแกนเข้าเรียน/งาน
-            </a>
-            <a href="reports.html" class="flex items-center p-3 text-gray-500 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition">
-                <i class="fas fa-chart-line w-8 text-lg"></i> สรุปผลการเรียน
             </a>
         </nav>
         <div class="p-4 border-t">
@@ -70,7 +66,6 @@
         </div>
 
         <div class="grid grid-cols-12 gap-6">
-            <!-- Left Side -->
             <div class="col-span-12 lg:col-span-4 space-y-6">
                 <div class="bg-white p-5 rounded-3xl shadow-sm border">
                     <h3 class="font-bold text-gray-700 mb-4 flex items-center">
@@ -106,21 +101,17 @@
                                 </select>
                             </div>
                         </div>
-                        <button onclick="saveAssignmentSettings()" class="w-full bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600 transition shadow-lg shadow-green-100">
-                            บันทึกการตั้งค่า
-                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Middle: Scanner Box -->
             <div class="col-span-12 lg:col-span-5">
                 <div class="bg-white p-6 rounded-[2.5rem] shadow-xl border relative">
                     <div class="scanner-box aspect-square flex items-center justify-center">
                         <div class="scan-line"></div>
                         <div id="reader"></div>
                         
-                        <div id="successOverlay" class="absolute inset-0 bg-green-500/90 hidden flex-col items-center justify-center text-white z-20 animate-pulse">
+                        <div id="successOverlay" class="absolute inset-0 bg-green-500/90 hidden flex-col items-center justify-center text-white z-20">
                             <i class="fas fa-check-circle text-7xl mb-4"></i>
                             <h4 class="text-2xl font-bold">บันทึกสำเร็จ!</h4>
                             <p id="scannedName" class="mt-2 text-xl italic font-semibold">กำลังส่งข้อมูล...</p>
@@ -139,19 +130,15 @@
                 </div>
             </div>
 
-            <!-- Right: Log -->
-            <div class="col-span-12 lg:col-span-3 space-y-6">
+            <div class="col-span-12 lg:col-span-3">
                 <div class="bg-white p-6 rounded-3xl shadow-sm border h-full flex flex-col min-h-[500px]">
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-bold text-gray-700">ประวัติสแกนล่าสุด</h3>
+                        <h3 class="font-bold text-gray-700">ประวัติสแกน</h3>
                         <span id="scanCount" class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">0/40</span>
                     </div>
                     <div class="space-y-4 flex-1 overflow-y-auto pr-2" id="activityLog">
-                        <div id="emptyLog" class="h-20 border-2 border-dashed border-gray-100 rounded-2xl flex items-center justify-center text-gray-300 text-xs italic text-center">สแกนคนถัดไป...</div>
+                        <div id="emptyLog" class="h-20 border-2 border-dashed border-gray-100 rounded-2xl flex items-center justify-center text-gray-300 text-xs italic text-center">พร้อมสแกน...</div>
                     </div>
-                    <button onclick="exportToExcel()" class="mt-6 w-full py-3 bg-gray-800 text-white rounded-xl font-bold hover:bg-black transition shadow-lg shadow-gray-200">
-                        ส่งออกรายงาน (Excel)
-                    </button>
                 </div>
             </div>
         </div>
@@ -164,6 +151,7 @@
         let scanHistory = [];
         let isProcessing = false;
 
+        // ฟังก์ชันสลับโหมด
         function toggleMode(mode) {
             currentMode = mode;
             const btnAtt = document.getElementById('btnAtt');
@@ -180,6 +168,7 @@
             }
         }
 
+        // เริ่มต้นกล้อง
         async function initScanner() {
             const statusLabel = document.getElementById('statusLabel');
             isProcessing = false;
@@ -197,108 +186,81 @@
                     const config = { fps: 15, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
                     await html5QrCode.start(cameraId, config, onScanSuccess);
                     statusLabel.innerText = "พร้อมสแกน...";
-                    statusLabel.className = "text-blue-900 font-bold";
                 } else {
-                    statusLabel.innerText = "ไม่พบอุปกรณ์กล้อง";
+                    statusLabel.innerText = "ไม่พบกล้อง";
                 }
             } catch (err) {
-                statusLabel.innerText = "กล้องปิดอยู่: กดปุ่มวงกลมเพื่อเริ่มใหม่";
+                statusLabel.innerText = "กล้องปิดอยู่";
             }
         }
 
-async function onScanSuccess(decodedText) {
-    if (isProcessing) return;
-    isProcessing = true;
+        // เมื่อสแกนสำเร็จ
+        async function onScanSuccess(decodedText) {
+            if (isProcessing) return;
+            isProcessing = true;
 
-    const statusLabel = document.getElementById('statusLabel');
-    
-    // 1. หยุดสแกนชั่วคราว (Pause) แทนการ Stop เพื่อไม่ให้กล้องค้าง
-    try {
-        await html5QrCode.pause(true); 
-        statusLabel.innerText = "กำลังบันทึกข้อมูล...";
-    } catch (err) {
-        console.error(err);
-    }
+            // แสดง Overlay
+            showOverlay(decodedText);
+            
+            // เตรียมข้อมูลส่งไปยัง Apps Script
+            const payload = {
+                action: 'recordScan',
+                id: decodedText,
+                mode: currentMode,
+                room: document.getElementById('classSelect').value,
+                workName: currentMode === 'assignment' ? document.getElementById('workTitle').value : 'เช็คชื่อเข้าเรียน',
+                score: currentMode === 'assignment' ? document.getElementById('fullScore').value : '-',
+                status: document.getElementById('timeStatus').value,
+                timestamp: new Date().toISOString()
+            };
 
-    // 2. แสดง UI แจ้งเตือน
-    showOverlay("บันทึกสำเร็จ", decodedText);
+            const formData = new URLSearchParams();
+            for (const key in payload) formData.append(key, payload[key]);
 
-    // 3. เตรียมข้อมูลให้ตรงกับหัวตารางใน Google Sheet (ตามรูปภาพของคุณ)
-    // ในรูปตาราง Attendance มี Timestamp, Date, ID, Subject_ID, Status
-    // ในรูปตาราง Submissions มี Timestamp, ID, Subject_ID, Assignment_Name, File_URL, Score, Status
-    
-    const payload = {
-        action: 'recordScan',
-        id: decodedText,
-        mode: currentMode,
-        subjectId: "CS101", // ปรับให้ตรงกับวิชาในตาราง Subjects
-        assignmentName: document.getElementById('workTitle').value,
-        score: document.getElementById('fullScore').value,
-        status: document.getElementById('timeStatus').value,
-        admin: 'Teacher Admin'
-    };
-
-    // 4. ส่งข้อมูล
-    const formData = new URLSearchParams();
-    for (const key in payload) formData.append(key, payload[key]);
-
-    fetch(WEB_APP_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: formData
-    }).then(() => {
-        addToLog(decodedText, "Success");
-        
-        // 5. ใช้ SweetAlert แจ้งเพื่อให้ User กดเริ่มใหม่เอง ลดอาการกล้องค้าง
-        Swal.fire({
-            title: 'บันทึกสำเร็จ!',
-            text: 'รหัส ' + decodedText + ' เรียบร้อยแล้ว',
-            icon: 'success',
-            confirmButtonText: 'สแกนต่อไป',
-            timer: 2000,
-            timerProgressBar: true
-        }).then(() => {
-            resumeScanner(); // เรียกฟังก์ชันเปิดรับสแกนต่อ
-        });
-    }).catch(err => {
-        isProcessing = false;
-        html5QrCode.resume();
-        Swal.fire('ผิดพลาด', 'บันทึกไม่สำเร็จ', 'error');
-    });
-}
-
-// ฟังก์ชันกลับมาสแกนต่อ (ไม่ต้องโหลดกล้องใหม่)
-function resumeScanner() {
-    isProcessing = false;
-    hideOverlay();
-    if (html5QrCode) {
-        html5QrCode.resume();
-        document.getElementById('statusLabel').innerText = "พร้อมสแกน...";
-    }
-}
-
-// ปรับปุ่ม Restart ให้ทำงานเร็วขึ้น
-function restartScanner() {
-    if (html5QrCode && html5QrCode.getState() === 3) { // ถ้า Pause อยู่
-        resumeScanner();
-    } else {
-        location.reload(); // ถ้ากล้องตายจริงๆ ให้รีเฟรช
-    }
-}
-
-        function logout() { 
-            localStorage.clear(); 
-            location.href = "index.html"; 
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: formData
+            }).then(() => {
+                addToLog(decodedText);
+                setTimeout(resumeScanner, 2000); // รอ 2 วินาทีค่อยสแกนคนถัดไป
+            }).catch(err => {
+                isProcessing = false;
+                Swal.fire('ผิดพลาด', 'บันทึกไม่สำเร็จ', 'error');
+            });
         }
 
-        function saveAssignmentSettings() { 
-            Swal.fire('สำเร็จ', 'บันทึกการตั้งค่าใบงานแล้ว', 'success'); 
+        function showOverlay(id) {
+            const overlay = document.getElementById('successOverlay');
+            document.getElementById('scannedName').innerText = "ID: " + id;
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
         }
 
-        function exportToExcel() { 
-            if (scanHistory.length === 0) return Swal.fire('แจ้งเตือน', 'ยังไม่มีข้อมูลการสแกน', 'warning');
-            Swal.fire('สำเร็จ', 'ข้อมูลถูกจัดเก็บใน Google Sheet เรียบร้อยแล้ว', 'success'); 
+        function resumeScanner() {
+            isProcessing = false;
+            document.getElementById('successOverlay').classList.add('hidden');
+            document.getElementById('successOverlay').classList.remove('flex');
         }
+
+        function addToLog(id) {
+            const logContainer = document.getElementById('activityLog');
+            const emptyLog = document.getElementById('emptyLog');
+            if (emptyLog) emptyLog.remove();
+
+            const time = new Date().toLocaleTimeString('th-TH');
+            const item = document.createElement('div');
+            item.className = "p-3 bg-blue-50 rounded-xl border border-blue-100 mb-2 animate-pulse";
+            item.innerHTML = `<div class="font-bold text-sm">ID: ${id}</div>
+                              <div class="text-xs text-gray-500">${time} - บันทึกแล้ว</div>`;
+            logContainer.prepend(item);
+            
+            scanHistory.push(id);
+            document.getElementById('scanCount').innerText = scanHistory.length + "/40";
+        }
+
+        function restartScanner() { location.reload(); }
+        function logout() { location.href = "index.html"; }
 
         window.onload = initScanner;
     </script>
