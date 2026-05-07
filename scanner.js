@@ -2,7 +2,7 @@
 let html5QrCode;
 let currentMode = 'attendance';
 let scanHistory = [];
-const scriptURL = 'https://script.google.com/macros/s/AKfycbxcbhoYr1Yjjv4VDbsqx-66dYMmBg9tNn9_vAkXMoptD-nNoSYqvXAqrDyBuoSVBrP5Yg/exec';
+const scriptURL = 'https://script.google.com/macros/s/AKfycbwT2u_h9_PzFsypgh_48GXwaesdoOYdvyRlkAA8CaAT9wzr3zW7mUVE3GM3r9nmQzeaZg/exec';
 
 window.onload = () => {
     initScanner();
