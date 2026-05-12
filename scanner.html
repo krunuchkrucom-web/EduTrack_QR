@@ -81,8 +81,26 @@
                     </div>
                 </div>
 
+                <div id="attendanceDetail" class="bg-white p-6 rounded-3xl shadow-sm border">
+                    <h3 class="font-bold text-gray-700 mb-4 flex items-center">
+                        <i class="fas fa-user-check mr-2 text-green-500"></i> สถานะการเช็คชื่อ
+                    </h3>
+                    <div class="space-y-3">
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">เลือกสถานะปัจจุบัน</label>
+                        <select id="attStatus" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-blue-500 outline-none transition font-bold text-blue-600">
+                            <option value="ปกติ">✅ มาเรียนปกติ</option>
+                            <option value="สาย">🕒 มาสาย</option>
+                            <option value="ขาด">❌ ขาดเรียน</option>
+                            <option value="ลา">📝 ลาพักผ่อน/ป่วย</option>
+                        </select>
+                        <p class="text-[10px] text-gray-400 italic text-center">* สถานะนี้จะถูกใช้เมื่อมีการสแกนในโหมดเช็คชื่อ</p>
+                    </div>
+                </div>
+
                 <div id="assignmentDetail" class="bg-white p-6 rounded-3xl shadow-sm border hidden">
-                    <h3 class="font-bold text-gray-700 mb-4">ข้อมูลการส่งงาน</h3>
+                    <h3 class="font-bold text-gray-700 mb-4 flex items-center">
+                        <i class="fas fa-tasks mr-2 text-orange-500"></i> ข้อมูลการส่งงาน
+                    </h3>
                     <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-1">หัวข้อใบงาน</label>
@@ -164,14 +182,18 @@
             const btnAtt = document.getElementById('btnAtt');
             const btnAss = document.getElementById('btnAss');
             const assDetail = document.getElementById('assignmentDetail');
+            const attDetail = document.getElementById('attendanceDetail');
+
             if (mode === 'attendance') {
                 btnAtt.className = "flex-1 py-3 rounded-xl font-bold transition text-blue-600 bg-white shadow-sm";
                 btnAss.className = "flex-1 py-3 rounded-xl font-bold transition text-gray-400";
                 assDetail.classList.add('hidden');
+                attDetail.classList.remove('hidden');
             } else {
                 btnAss.className = "flex-1 py-3 rounded-xl font-bold transition text-blue-600 bg-white shadow-sm";
                 btnAtt.className = "flex-1 py-3 rounded-xl font-bold transition text-gray-400";
                 assDetail.classList.remove('hidden');
+                attDetail.classList.add('hidden');
             }
         }
 
@@ -205,19 +227,23 @@
 
             showOverlay(decodedText);
             
-            // ดึงค่าจากช่อง Input ต่างๆ
             const selectedRoom = document.getElementById('classSelect').value;
             const fileUrlValue = document.getElementById('file-url').value;
+            
+            // กำหนดค่า Status ตามโหมดที่เลือก
+            const selectedStatus = (currentMode === 'attendance') 
+                                    ? document.getElementById('attStatus').value 
+                                    : document.getElementById('timeStatus').value;
 
             const payload = {
                 action: 'recordScan',
                 id: decodedText,
                 mode: currentMode,
-                room: selectedRoom, // ส่งห้องเพื่อแยก Sheet
+                room: selectedRoom,
                 workName: currentMode === 'assignment' ? document.getElementById('workTitle').value : 'เช็คชื่อเข้าเรียน',
                 score: currentMode === 'assignment' ? document.getElementById('fullScore').value : '-',
-                fileUrl: currentMode === 'assignment' ? fileUrlValue : '', // ส่ง File URL
-                status: document.getElementById('timeStatus').value,
+                fileUrl: currentMode === 'assignment' ? fileUrlValue : '',
+                status: selectedStatus, // ใช้ค่า Status ที่แยกตามโหมด
                 timestamp: new Date().toISOString()
             };
 
@@ -229,8 +255,7 @@
                 mode: 'no-cors',
                 body: formData
             }).then(() => {
-                addToLog(decodedText);
-                // ล้างค่า File URL หลังจากสแกนสำเร็จ
+                addToLog(decodedText, selectedStatus);
                 if(currentMode === 'assignment') document.getElementById('file-url').value = "";
                 setTimeout(resumeScanner, 2000);
             }).catch(err => {
@@ -239,7 +264,6 @@
             });
         }
 
-        // ฟังก์ชันหยุดสแกน
         async function stopScanner() {
             if (html5QrCode && html5QrCode.isScanning) {
                 try {
@@ -265,7 +289,7 @@
             document.getElementById('successOverlay').classList.remove('flex');
         }
 
-        function addToLog(id) {
+        function addToLog(id, status) {
             const logContainer = document.getElementById('activityLog');
             const emptyLog = document.getElementById('emptyLog');
             if (emptyLog) emptyLog.remove();
@@ -273,8 +297,13 @@
             const time = new Date().toLocaleTimeString('th-TH');
             const item = document.createElement('div');
             item.className = "p-3 bg-blue-50 rounded-xl border border-blue-100 mb-2 animate-pulse";
-            item.innerHTML = `<div class="font-bold text-sm">ID: ${id}</div>
-                              <div class="text-xs text-gray-500">${time} - บันทึกแล้ว</div>`;
+            
+            // ปรับการแสดงผลใน Log ให้เห็นสถานะด้วย
+            item.innerHTML = `<div class="flex justify-between items-center">
+                                <span class="font-bold text-sm">ID: ${id}</span>
+                                <span class="text-[10px] px-2 py-0.5 bg-white rounded-full border text-blue-500 font-bold">${status}</span>
+                              </div>
+                              <div class="text-xs text-gray-500 mt-1">${time} - บันทึกแล้ว</div>`;
             logContainer.prepend(item);
             
             scanHistory.push(id);
