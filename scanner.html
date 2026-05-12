@@ -79,6 +79,9 @@
                             ส่งงาน/ให้คะแนน
                         </button>
                     </div>
+                    <button onclick="fetchStudentList()" class="w-full mt-4 py-3 bg-gray-800 text-white rounded-xl font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-list-ul"></i> เช็คชื่อด้วยรายชื่อ (ขาด/ลา)
+                    </button>
                 </div>
 
                 <div id="attendanceDetail" class="bg-white p-6 rounded-3xl shadow-sm border">
@@ -90,10 +93,8 @@
                         <select id="attStatus" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-blue-500 outline-none transition font-bold text-blue-600">
                             <option value="ปกติ">✅ มาเรียนปกติ</option>
                             <option value="สาย">🕒 มาสาย</option>
-                            <option value="ขาด">❌ ขาดเรียน</option>
-                            <option value="ลา">📝 ลาพักผ่อน/ป่วย</option>
                         </select>
-                        <p class="text-[10px] text-gray-400 italic text-center">* สถานะนี้จะถูกใช้เมื่อมีการสแกนในโหมดเช็คชื่อ</p>
+                        <p class="text-[10px] text-gray-400 italic text-center">* คนที่ไม่สแกนจะถูกบันทึกว่า "ขาด" อัตโนมัติเมื่อจบคาบ</p>
                     </div>
                 </div>
 
@@ -104,7 +105,7 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-1">หัวข้อใบงาน</label>
-                            <input type="text" id="workTitle" value="ใบงานที่ 1: พื้นฐานวงจรไฟฟ้า" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-blue-500 outline-none transition">
+                            <input type="text" id="workTitle" value="ใบงานที่ 1" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-blue-500 outline-none transition">
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
@@ -119,10 +120,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">ลิงก์ส่งงาน (File URL)</label>
-                            <input type="url" id="file-url" placeholder="วางลิงก์ Google Drive หรือไฟล์ที่นี่" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-blue-500 outline-none transition text-blue-600">
-                        </div>
+                        <input type="url" id="file-url" placeholder="วางลิงก์ไฟล์ (ถ้ามี)" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-blue-500 outline-none transition text-blue-600">
                     </div>
                 </div>
             </div>
@@ -145,12 +143,8 @@
                             <p id="statusLabel" class="text-blue-900 font-bold">กำลังเปิดกล้อง...</p>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="stopScanner()" class="w-12 h-12 bg-red-100 rounded-full shadow text-red-600 hover:bg-red-200 transition flex items-center justify-center" title="หยุดสแกน">
-                                <i class="fas fa-stop"></i>
-                            </button>
-                            <button onclick="restartScanner()" class="w-12 h-12 bg-white rounded-full shadow text-blue-600 hover:rotate-180 transition duration-500 flex items-center justify-center">
-                                <i class="fas fa-sync-alt"></i>
-                            </button>
+                            <button onclick="stopScanner()" class="w-12 h-12 bg-red-100 rounded-full shadow text-red-600 hover:bg-red-200 transition flex items-center justify-center"><i class="fas fa-stop"></i></button>
+                            <button onclick="restartScanner()" class="w-12 h-12 bg-white rounded-full shadow text-blue-600 flex items-center justify-center"><i class="fas fa-sync-alt"></i></button>
                         </div>
                     </div>
                 </div>
@@ -159,16 +153,28 @@
             <div class="col-span-12 lg:col-span-3">
                 <div class="bg-white p-6 rounded-3xl shadow-sm border h-full flex flex-col min-h-[500px]">
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-bold text-gray-700">ประวัติสแกน</h3>
+                        <h3 class="font-bold text-gray-700">ประวัติสแกนวันนี้</h3>
                         <span id="scanCount" class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">0/40</span>
                     </div>
                     <div class="space-y-4 flex-1 overflow-y-auto pr-2" id="activityLog">
-                        <div id="emptyLog" class="h-20 border-2 border-dashed border-gray-100 rounded-2xl flex items-center justify-center text-gray-300 text-xs italic text-center">พร้อมสแกน...</div>
+                        <div id="emptyLog" class="h-20 border-2 border-dashed border-gray-100 rounded-2xl flex items-center justify-center text-gray-300 text-xs italic">พร้อมสแกน...</div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
+
+    <div id="studentModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-[100] p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden">
+            <div class="p-6 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-xl text-gray-800">รายชื่อห้อง <span id="modalRoomTitle" class="text-blue-600"></span></h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="studentListContainer" class="p-4 max-h-[450px] overflow-y-auto">
+                <p class="text-center text-gray-400 py-4">กำลังโหลดรายชื่อ...</p>
+            </div>
+        </div>
+    </div>
 
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwT2u_h9_PzFsypgh_48GXwaesdoOYdvyRlkAA8CaAT9wzr3zW7mUVE3GM3r9nmQzeaZg/exec";
@@ -179,137 +185,109 @@
 
         function toggleMode(mode) {
             currentMode = mode;
-            const btnAtt = document.getElementById('btnAtt');
-            const btnAss = document.getElementById('btnAss');
-            const assDetail = document.getElementById('assignmentDetail');
-            const attDetail = document.getElementById('attendanceDetail');
-
+            const btnAtt = document.getElementById('btnAtt'), btnAss = document.getElementById('btnAss');
+            const assDetail = document.getElementById('assignmentDetail'), attDetail = document.getElementById('attendanceDetail');
             if (mode === 'attendance') {
                 btnAtt.className = "flex-1 py-3 rounded-xl font-bold transition text-blue-600 bg-white shadow-sm";
                 btnAss.className = "flex-1 py-3 rounded-xl font-bold transition text-gray-400";
-                assDetail.classList.add('hidden');
-                attDetail.classList.remove('hidden');
+                assDetail.classList.add('hidden'); attDetail.classList.remove('hidden');
             } else {
                 btnAss.className = "flex-1 py-3 rounded-xl font-bold transition text-blue-600 bg-white shadow-sm";
                 btnAtt.className = "flex-1 py-3 rounded-xl font-bold transition text-gray-400";
-                assDetail.classList.remove('hidden');
-                attDetail.classList.add('hidden');
+                assDetail.classList.remove('hidden'); attDetail.classList.add('hidden');
             }
         }
 
         async function initScanner() {
-            const statusLabel = document.getElementById('statusLabel');
-            isProcessing = false;
             try {
                 const devices = await Html5Qrcode.getCameras();
-                if (devices && devices.length > 0) {
+                if (devices.length > 0) {
                     html5QrCode = new Html5Qrcode("reader");
-                    let cameraId = devices[0].id;
-                    const backCamera = devices.find(device => 
-                        device.label.toLowerCase().includes('back') || 
-                        device.label.toLowerCase().includes('environment')
-                    );
-                    if (backCamera) cameraId = backCamera.id;
-                    const config = { fps: 15, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
-                    await html5QrCode.start(cameraId, config, onScanSuccess);
-                    statusLabel.innerText = "พร้อมสแกน...";
-                } else {
-                    statusLabel.innerText = "ไม่พบกล้อง";
+                    await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, onScanSuccess);
+                    document.getElementById('statusLabel').innerText = "พร้อมสแกน...";
                 }
-            } catch (err) {
-                statusLabel.innerText = "กล้องปิดอยู่";
-            }
+            } catch (err) { document.getElementById('statusLabel').innerText = "กล้องปิดอยู่"; }
         }
 
-        async function onScanSuccess(decodedText) {
+        async function onScanSuccess(decodedText, manualStatus = null) {
             if (isProcessing) return;
             isProcessing = true;
-
-            showOverlay(decodedText);
+            if (!manualStatus) showOverlay(decodedText);
             
-            const selectedRoom = document.getElementById('classSelect').value;
-            const fileUrlValue = document.getElementById('file-url').value;
+            const selectedStatus = manualStatus || (currentMode === 'attendance' ? document.getElementById('attStatus').value : document.getElementById('timeStatus').value);
             
-            // กำหนดค่า Status ตามโหมดที่เลือก
-            const selectedStatus = (currentMode === 'attendance') 
-                                    ? document.getElementById('attStatus').value 
-                                    : document.getElementById('timeStatus').value;
-
             const payload = {
                 action: 'recordScan',
                 id: decodedText,
                 mode: currentMode,
-                room: selectedRoom,
+                room: document.getElementById('classSelect').value,
                 workName: currentMode === 'assignment' ? document.getElementById('workTitle').value : 'เช็คชื่อเข้าเรียน',
                 score: currentMode === 'assignment' ? document.getElementById('fullScore').value : '-',
-                fileUrl: currentMode === 'assignment' ? fileUrlValue : '',
-                status: selectedStatus, // ใช้ค่า Status ที่แยกตามโหมด
+                fileUrl: document.getElementById('file-url').value,
+                status: selectedStatus,
                 timestamp: new Date().toISOString()
             };
 
             const formData = new URLSearchParams();
             for (const key in payload) formData.append(key, payload[key]);
 
-            fetch(WEB_APP_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: formData
-            }).then(() => {
+            fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: formData })
+            .then(() => {
                 addToLog(decodedText, selectedStatus);
-                if(currentMode === 'assignment') document.getElementById('file-url').value = "";
-                setTimeout(resumeScanner, 2000);
-            }).catch(err => {
-                isProcessing = false;
-                Swal.fire('ผิดพลาด', 'บันทึกไม่สำเร็จ', 'error');
-            });
-        }
-
-        async function stopScanner() {
-            if (html5QrCode && html5QrCode.isScanning) {
-                try {
-                    await html5QrCode.stop();
-                    document.getElementById('statusLabel').innerText = "หยุดการสแกนแล้ว";
-                    document.getElementById('statusLabel').className = "text-red-600 font-bold";
-                } catch (err) {
-                    console.error("Unable to stop scanning.", err);
+                if (manualStatus) {
+                    isProcessing = false;
+                    Swal.fire({ title: 'สำเร็จ', text: `บันทึก ${selectedStatus} แล้ว`, icon: 'success', timer: 1000, showConfirmButton: false });
+                } else {
+                    setTimeout(resumeScanner, 2000);
                 }
-            }
+            }).catch(() => { isProcessing = false; });
         }
 
-        function showOverlay(id) {
-            const overlay = document.getElementById('successOverlay');
-            document.getElementById('scannedName').innerText = "ID: " + id;
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
+        function closeModal() { document.getElementById('studentModal').classList.add('hidden'); }
+        
+        async function fetchStudentList() {
+            const room = document.getElementById('classSelect').value;
+            document.getElementById('modalRoomTitle').innerText = room;
+            document.getElementById('studentModal').classList.replace('hidden', 'flex');
+            // เรียกผ่าน Google Script (ต้องมีฟังก์ชัน getStudents ใน .gs)
+            if(typeof google !== 'undefined') google.script.run.withSuccessHandler(showStudents).getStudents(room);
         }
 
-        function resumeScanner() {
-            isProcessing = false;
-            document.getElementById('successOverlay').classList.add('hidden');
-            document.getElementById('successOverlay').classList.remove('flex');
+        function showStudents(students) {
+            const container = document.getElementById('studentListContainer');
+            container.innerHTML = students.map(s => `
+                <div class="flex items-center justify-between p-3 border-b hover:bg-gray-50 transition">
+                    <div class="text-sm"><b>${s.id}</b><br>${s.name}</div>
+                    <div class="flex gap-2">
+                        <button onclick="onScanSuccess('${s.id}', 'ขาด'); closeModal();" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-xs font-bold">ขาด</button>
+                        <button onclick="onScanSuccess('${s.id}', 'ลา'); closeModal();" class="px-3 py-1 bg-yellow-100 text-yellow-600 rounded-lg text-xs font-bold">ลา</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function addToLog(id, status) {
-            const logContainer = document.getElementById('activityLog');
-            const emptyLog = document.getElementById('emptyLog');
-            if (emptyLog) emptyLog.remove();
-
-            const time = new Date().toLocaleTimeString('th-TH');
+            const log = document.getElementById('activityLog');
+            if (document.getElementById('emptyLog')) document.getElementById('emptyLog').remove();
             const item = document.createElement('div');
-            item.className = "p-3 bg-blue-50 rounded-xl border border-blue-100 mb-2 animate-pulse";
-            
-            // ปรับการแสดงผลใน Log ให้เห็นสถานะด้วย
-            item.innerHTML = `<div class="flex justify-between items-center">
-                                <span class="font-bold text-sm">ID: ${id}</span>
-                                <span class="text-[10px] px-2 py-0.5 bg-white rounded-full border text-blue-500 font-bold">${status}</span>
-                              </div>
-                              <div class="text-xs text-gray-500 mt-1">${time} - บันทึกแล้ว</div>`;
-            logContainer.prepend(item);
-            
+            item.className = "p-3 bg-blue-50 rounded-xl border border-blue-100 mb-2 transition-all";
+            item.innerHTML = `<div class="flex justify-between font-bold text-sm"><span>ID: ${id}</span><span class="text-blue-500">${status}</span></div>`;
+            log.prepend(item);
             scanHistory.push(id);
             document.getElementById('scanCount').innerText = scanHistory.length + "/40";
         }
 
+        function showOverlay(id) {
+            document.getElementById('scannedName').innerText = "ID: " + id;
+            document.getElementById('successOverlay').classList.replace('hidden', 'flex');
+        }
+
+        function resumeScanner() {
+            isProcessing = false;
+            document.getElementById('successOverlay').classList.replace('flex', 'hidden');
+        }
+
+        function stopScanner() { html5QrCode.stop(); document.getElementById('statusLabel').innerText = "หยุดสแกน"; }
         function restartScanner() { location.reload(); }
         function logout() { location.href = "index.html"; }
 
