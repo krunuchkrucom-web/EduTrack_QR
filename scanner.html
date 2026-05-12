@@ -100,10 +100,10 @@
                                     <option value="ส่งล่าช้า">ส่งล่าช้า</option>
                                 </select>
                             </div>
-                            <div class="mb-3">
-                              <label class="form-label">ลิงก์ส่งงาน (File URL)</label>
-                              <input type="url" id="file-url" class="form-control" placeholder="วางลิงก์ Google Drive หรือไฟล์ที่นี่">
-                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">ลิงก์ส่งงาน (File URL)</label>
+                            <input type="url" id="file-url" placeholder="วางลิงก์ Google Drive หรือไฟล์ที่นี่" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-blue-500 outline-none transition text-blue-600">
                         </div>
                     </div>
                 </div>
@@ -114,7 +114,6 @@
                     <div class="scanner-box aspect-square flex items-center justify-center">
                         <div class="scan-line"></div>
                         <div id="reader"></div>
-                        
                         <div id="successOverlay" class="absolute inset-0 bg-green-500/90 hidden flex-col items-center justify-center text-white z-20">
                             <i class="fas fa-check-circle text-7xl mb-4"></i>
                             <h4 class="text-2xl font-bold">บันทึกสำเร็จ!</h4>
@@ -127,9 +126,14 @@
                             <p class="text-xs text-blue-500 font-bold uppercase">Status</p>
                             <p id="statusLabel" class="text-blue-900 font-bold">กำลังเปิดกล้อง...</p>
                         </div>
-                        <button onclick="restartScanner()" class="w-12 h-12 bg-white rounded-full shadow text-blue-600 hover:rotate-180 transition duration-500 flex items-center justify-center">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="stopScanner()" class="w-12 h-12 bg-red-100 rounded-full shadow text-red-600 hover:bg-red-200 transition flex items-center justify-center" title="หยุดสแกน">
+                                <i class="fas fa-stop"></i>
+                            </button>
+                            <button onclick="restartScanner()" class="w-12 h-12 bg-white rounded-full shadow text-blue-600 hover:rotate-180 transition duration-500 flex items-center justify-center">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -155,7 +159,6 @@
         let scanHistory = [];
         let isProcessing = false;
 
-        // ฟังก์ชันสลับโหมด
         function toggleMode(mode) {
             currentMode = mode;
             const btnAtt = document.getElementById('btnAtt');
@@ -172,7 +175,6 @@
             }
         }
 
-        // เริ่มต้นกล้อง
         async function initScanner() {
             const statusLabel = document.getElementById('statusLabel');
             isProcessing = false;
@@ -186,7 +188,6 @@
                         device.label.toLowerCase().includes('environment')
                     );
                     if (backCamera) cameraId = backCamera.id;
-
                     const config = { fps: 15, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
                     await html5QrCode.start(cameraId, config, onScanSuccess);
                     statusLabel.innerText = "พร้อมสแกน...";
@@ -198,22 +199,24 @@
             }
         }
 
-        // เมื่อสแกนสำเร็จ
         async function onScanSuccess(decodedText) {
             if (isProcessing) return;
             isProcessing = true;
 
-            // แสดง Overlay
             showOverlay(decodedText);
             
-            // เตรียมข้อมูลส่งไปยัง Apps Script
+            // ดึงค่าจากช่อง Input ต่างๆ
+            const selectedRoom = document.getElementById('classSelect').value;
+            const fileUrlValue = document.getElementById('file-url').value;
+
             const payload = {
                 action: 'recordScan',
                 id: decodedText,
                 mode: currentMode,
-                room: document.getElementById('classSelect').value,
+                room: selectedRoom, // ส่งห้องเพื่อแยก Sheet
                 workName: currentMode === 'assignment' ? document.getElementById('workTitle').value : 'เช็คชื่อเข้าเรียน',
                 score: currentMode === 'assignment' ? document.getElementById('fullScore').value : '-',
+                fileUrl: currentMode === 'assignment' ? fileUrlValue : '', // ส่ง File URL
                 status: document.getElementById('timeStatus').value,
                 timestamp: new Date().toISOString()
             };
@@ -227,11 +230,26 @@
                 body: formData
             }).then(() => {
                 addToLog(decodedText);
-                setTimeout(resumeScanner, 2000); // รอ 2 วินาทีค่อยสแกนคนถัดไป
+                // ล้างค่า File URL หลังจากสแกนสำเร็จ
+                if(currentMode === 'assignment') document.getElementById('file-url').value = "";
+                setTimeout(resumeScanner, 2000);
             }).catch(err => {
                 isProcessing = false;
                 Swal.fire('ผิดพลาด', 'บันทึกไม่สำเร็จ', 'error');
             });
+        }
+
+        // ฟังก์ชันหยุดสแกน
+        async function stopScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                try {
+                    await html5QrCode.stop();
+                    document.getElementById('statusLabel').innerText = "หยุดการสแกนแล้ว";
+                    document.getElementById('statusLabel').className = "text-red-600 font-bold";
+                } catch (err) {
+                    console.error("Unable to stop scanning.", err);
+                }
+            }
         }
 
         function showOverlay(id) {
