@@ -223,11 +223,11 @@
                 action: 'recordScan',
                 id: studentID,
                 mode: currentMode,
-                room: document.getElementById('classSelect').value,
+                room: document.getElementById('classSelect').value, // ต้องมั่นใจว่าดึงค่าจาก Select ตัวนี้
                 workName: currentMode === 'assignment' ? document.getElementById('workTitle').value : 'เช็คชื่อเข้าเรียน',
                 score: currentMode === 'assignment' ? document.getElementById('fullScore').value : '-',
                 fileUrl: document.getElementById('file-url').value,
-                status: String(selectedStatus), // บังคับเป็น String
+                status: String(selectedStatus),
                 timestamp: new Date().toLocaleString('th-TH')
             };
 
