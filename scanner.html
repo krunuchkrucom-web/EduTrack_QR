@@ -209,26 +209,26 @@
             } catch (err) { document.getElementById('statusLabel').innerText = "กล้องปิดอยู่"; }
         }
 
-        async function onScanSuccess(decodedText, manualStatus = null) {
+   async function onScanSuccess(decodedText, manualStatus = null) {
             if (isProcessing) return;
             isProcessing = true;
             
-            // ป้องกันการส่งค่าที่เป็น Object
             const studentID = String(decodedText).trim();
             if (!manualStatus) showOverlay(studentID);
             
             const selectedStatus = manualStatus || (currentMode === 'attendance' ? document.getElementById('attStatus').value : document.getElementById('timeStatus').value);
             
+            // --- ปรับปรุง Payload ให้ส่ง room ไปด้วยเพื่อบันทึกลง RoomID ---
             const payload = {
                 action: 'recordScan',
                 id: studentID,
                 mode: currentMode,
-                room: document.getElementById('classSelect').value, // ต้องมั่นใจว่าดึงค่าจาก Select ตัวนี้
+                room: document.getElementById('classSelect').value, // ส่งชื่อห้องเรียน
                 workName: currentMode === 'assignment' ? document.getElementById('workTitle').value : 'เช็คชื่อเข้าเรียน',
                 score: currentMode === 'assignment' ? document.getElementById('fullScore').value : '-',
-                fileUrl: document.getElementById('file-url').value,
-                status: String(selectedStatus),
-                timestamp: new Date().toLocaleString('th-TH')
+                fileUrl: document.getElementById('file-url').value || "",
+                status: String(selectedStatus), // บังคับเป็น String ป้องกัน [object Object]
+                subjectId: "CS101" // ระบุรหัสวิชาเริ่มต้น
             };
 
             const formData = new URLSearchParams();
@@ -256,24 +256,23 @@
 
         function closeModal() { document.getElementById('studentModal').classList.add('hidden'); }
         
-        async function fetchStudentList() {
+async function fetchStudentList() {
             const room = document.getElementById('classSelect').value;
             document.getElementById('modalRoomTitle').innerText = room;
             document.getElementById('studentModal').classList.replace('hidden', 'flex');
             document.getElementById('studentListContainer').innerHTML = '<p class="text-center py-4">กำลังโหลด...</p>';
             
-            // ตรวจสอบสภาพแวดล้อม Google Script
             if (window.google && google.script && google.script.run) {
+                // แก้ไขการเรียกใช้: ส่งทั้ง room และใช้ handler ให้ถูกต้อง
                 google.script.run.withSuccessHandler(showStudents).getStudents(room);
             } else {
-                // สำหรับทดสอบบน Browser ทั่วไป
+                // สำหรับทดสอบบน Browser ทั่วไป (Mock Data)
                 setTimeout(() => {
                     const mockData = [{id: '6301001', name: 'นายทดสอบ ระบบ'}, {id: '6301002', name: 'นางสาวเรียนดี ขยัน'}];
                     showStudents(mockData);
                 }, 1000);
             }
         }
-
         function showStudents(students) {
             const container = document.getElementById('studentListContainer');
             if (!students || students.length === 0) {
