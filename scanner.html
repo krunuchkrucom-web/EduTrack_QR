@@ -56,7 +56,7 @@
                 <p class="text-gray-500">จัดการการเข้าเรียนและคะแนนผ่านการสแกน QR Code</p>
             </div>
             <div class="flex items-center bg-white p-2 rounded-2xl shadow-sm border">
-                <span class="px-4 text-sm font-semibold text-gray-600 border-r">ห้องเรียน</span>
+                <span class="px-4 text-sm font-semibold text-gray-600 border-r">เลือกห้องเรียน</span>
                 <select id="classSelect" class="px-4 py-1 text-blue-600 font-bold focus:outline-none bg-transparent">
                     <option value="ปวช. 1/1">ปวช. 1/1</option>
                     <option value="ปวช. 2/1">ปวช. 2/1</option>
@@ -91,8 +91,8 @@
                     <div class="space-y-3">
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-1">เลือกสถานะปัจจุบัน</label>
                         <select id="attStatus" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-blue-500 outline-none transition font-bold text-blue-600">
-                            <option value="ปกติ">✅ มาเรียนปกติ</option>
-                            <option value="สาย">🕒 มาสาย</option>
+                            <option value="มาเรียนปกติ">✅ มาเรียนปกติ</option>
+                            <option value="สาย">🕒 สาย</option>
                         </select>
                         <p class="text-[10px] text-gray-400 italic text-center">* คนที่ไม่สแกนจะถูกบันทึกว่า "ขาด" อัตโนมัติเมื่อจบคาบ</p>
                     </div>
@@ -113,14 +113,14 @@
                                 <input type="number" id="fullScore" value="10" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-blue-500 outline-none transition text-center text-lg font-bold">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">สถานะเวลา</label>
-                                <select id="timeStatus" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-blue-500 outline-none transition">
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">สถานะการส่ง</label>
+                                <select id="timeStatus" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-blue-500 outline-none transition font-bold text-orange-600">
                                     <option value="ปกติ">ปกติ</option>
                                     <option value="ส่งล่าช้า">ส่งล่าช้า</option>
                                 </select>
                             </div>
                         </div>
-                        <input type="url" id="file-url" placeholder="วางลิงก์ไฟล์ (ถ้ามี)" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-blue-500 outline-none transition text-blue-600">
+                        <input type="url" id="file-url" placeholder="วางลิงก์ไฟล์ (ถ้ามี)" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-blue-500 outline-none transition text-blue-600 text-sm">
                     </div>
                 </div>
             </div>
@@ -171,7 +171,7 @@
                 <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
             </div>
             <div id="studentListContainer" class="p-4 max-h-[450px] overflow-y-auto">
-                <p class="text-center text-gray-400 py-4">กำลังโหลดรายชื่อ...</p>
+                <p class="text-center text-gray-400 py-4 font-bold">กำลังดึงข้อมูลนักเรียน...</p>
             </div>
         </div>
     </div>
@@ -203,7 +203,7 @@
                 const devices = await Html5Qrcode.getCameras();
                 if (devices.length > 0) {
                     html5QrCode = new Html5Qrcode("reader");
-                    await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, onScanSuccess);
+                    await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (text) => onScanSuccess(text));
                     document.getElementById('statusLabel').innerText = "พร้อมสแกน...";
                 }
             } catch (err) { document.getElementById('statusLabel').innerText = "กล้องปิดอยู่"; }
@@ -212,35 +212,46 @@
         async function onScanSuccess(decodedText, manualStatus = null) {
             if (isProcessing) return;
             isProcessing = true;
-            if (!manualStatus) showOverlay(decodedText);
+            
+            // ป้องกันการส่งค่าที่เป็น Object
+            const studentID = String(decodedText).trim();
+            if (!manualStatus) showOverlay(studentID);
             
             const selectedStatus = manualStatus || (currentMode === 'attendance' ? document.getElementById('attStatus').value : document.getElementById('timeStatus').value);
             
             const payload = {
                 action: 'recordScan',
-                id: decodedText,
+                id: studentID,
                 mode: currentMode,
                 room: document.getElementById('classSelect').value,
                 workName: currentMode === 'assignment' ? document.getElementById('workTitle').value : 'เช็คชื่อเข้าเรียน',
                 score: currentMode === 'assignment' ? document.getElementById('fullScore').value : '-',
                 fileUrl: document.getElementById('file-url').value,
-                status: selectedStatus,
-                timestamp: new Date().toISOString()
+                status: String(selectedStatus), // บังคับเป็น String
+                timestamp: new Date().toLocaleString('th-TH')
             };
 
             const formData = new URLSearchParams();
             for (const key in payload) formData.append(key, payload[key]);
 
-            fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: formData })
+            fetch(WEB_APP_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: formData 
+            })
             .then(() => {
-                addToLog(decodedText, selectedStatus);
+                addToLog(studentID, selectedStatus);
                 if (manualStatus) {
                     isProcessing = false;
-                    Swal.fire({ title: 'สำเร็จ', text: `บันทึก ${selectedStatus} แล้ว`, icon: 'success', timer: 1000, showConfirmButton: false });
+                    Swal.fire({ title: 'บันทึกแล้ว', text: `ID: ${studentID} (${selectedStatus})`, icon: 'success', timer: 1000, showConfirmButton: false });
                 } else {
-                    setTimeout(resumeScanner, 2000);
+                    setTimeout(resumeScanner, 1500);
                 }
-            }).catch(() => { isProcessing = false; });
+            }).catch((err) => { 
+                console.error(err);
+                isProcessing = false; 
+                Swal.fire('Error', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+            });
         }
 
         function closeModal() { document.getElementById('studentModal').classList.add('hidden'); }
@@ -249,18 +260,32 @@
             const room = document.getElementById('classSelect').value;
             document.getElementById('modalRoomTitle').innerText = room;
             document.getElementById('studentModal').classList.replace('hidden', 'flex');
-            // เรียกผ่าน Google Script (ต้องมีฟังก์ชัน getStudents ใน .gs)
-            if(typeof google !== 'undefined') google.script.run.withSuccessHandler(showStudents).getStudents(room);
+            document.getElementById('studentListContainer').innerHTML = '<p class="text-center py-4">กำลังโหลด...</p>';
+            
+            // ตรวจสอบสภาพแวดล้อม Google Script
+            if (window.google && google.script && google.script.run) {
+                google.script.run.withSuccessHandler(showStudents).getStudents(room);
+            } else {
+                // สำหรับทดสอบบน Browser ทั่วไป
+                setTimeout(() => {
+                    const mockData = [{id: '6301001', name: 'นายทดสอบ ระบบ'}, {id: '6301002', name: 'นางสาวเรียนดี ขยัน'}];
+                    showStudents(mockData);
+                }, 1000);
+            }
         }
 
         function showStudents(students) {
             const container = document.getElementById('studentListContainer');
+            if (!students || students.length === 0) {
+                container.innerHTML = '<p class="text-center py-4 text-red-500">ไม่พบรายชื่อนักเรียนในห้องนี้</p>';
+                return;
+            }
             container.innerHTML = students.map(s => `
                 <div class="flex items-center justify-between p-3 border-b hover:bg-gray-50 transition">
-                    <div class="text-sm"><b>${s.id}</b><br>${s.name}</div>
+                    <div class="text-sm"><b>${s.id}</b><br><span class="text-gray-600">${s.name}</span></div>
                     <div class="flex gap-2">
-                        <button onclick="onScanSuccess('${s.id}', 'ขาด'); closeModal();" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-xs font-bold">ขาด</button>
-                        <button onclick="onScanSuccess('${s.id}', 'ลา'); closeModal();" class="px-3 py-1 bg-yellow-100 text-yellow-600 rounded-lg text-xs font-bold">ลา</button>
+                        <button onclick="onScanSuccess('${s.id}', 'ขาด'); closeModal();" class="px-4 py-2 bg-red-100 text-red-600 rounded-xl text-xs font-bold hover:bg-red-200">ขาด</button>
+                        <button onclick="onScanSuccess('${s.id}', 'ลา'); closeModal();" class="px-4 py-2 bg-yellow-100 text-yellow-600 rounded-xl text-xs font-bold hover:bg-yellow-200">ลา</button>
                     </div>
                 </div>
             `).join('');
@@ -269,10 +294,18 @@
         function addToLog(id, status) {
             const log = document.getElementById('activityLog');
             if (document.getElementById('emptyLog')) document.getElementById('emptyLog').remove();
+            
             const item = document.createElement('div');
-            item.className = "p-3 bg-blue-50 rounded-xl border border-blue-100 mb-2 transition-all";
-            item.innerHTML = `<div class="flex justify-between font-bold text-sm"><span>ID: ${id}</span><span class="text-blue-500">${status}</span></div>`;
+            item.className = "p-3 bg-blue-50 rounded-xl border border-blue-100 mb-2 animate-pulse";
+            item.innerHTML = `
+                <div class="flex justify-between items-center font-bold text-sm">
+                    <span>ID: ${id}</span>
+                    <span class="${status === 'ขาด' ? 'text-red-500' : 'text-blue-500'}">${status}</span>
+                </div>
+            `;
             log.prepend(item);
+            setTimeout(() => item.classList.remove('animate-pulse'), 1000);
+            
             scanHistory.push(id);
             document.getElementById('scanCount').innerText = scanHistory.length + "/40";
         }
@@ -287,7 +320,11 @@
             document.getElementById('successOverlay').classList.replace('flex', 'hidden');
         }
 
-        function stopScanner() { html5QrCode.stop(); document.getElementById('statusLabel').innerText = "หยุดสแกน"; }
+        function stopScanner() { 
+            if(html5QrCode) html5QrCode.stop(); 
+            document.getElementById('statusLabel').innerText = "หยุดสแกน"; 
+        }
+
         function restartScanner() { location.reload(); }
         function logout() { location.href = "index.html"; }
 
