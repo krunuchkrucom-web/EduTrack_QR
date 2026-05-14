@@ -9,6 +9,19 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
+        /* คุมหน้าจอไม่ให้เบียดกันจนเห็นเป็นสองหน้า */
+          .app-container {
+              display: flex;
+              width: 100vw;
+              height: 100vh;
+              overflow: hidden;
+          }
+          .main-content {
+              flex: 1;
+              overflow-y: auto;
+              max-width: 100%; /* ป้องกันการขยายตัวเกินขอบจอ */
+          }
+        
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
         body { font-family: 'Sarabun', sans-serif; background-color: #f1f5f9; }
         .scanner-box { position: relative; border: 4px solid #3b82f6; border-radius: 20px; overflow: hidden; background: #000; }
@@ -435,39 +448,76 @@
 
         function closeModal() { document.getElementById('studentModal').classList.add('hidden'); }
         
+// ฟังก์ชันดึงรายชื่อนักเรียนมาแสดงในป๊อปอัพ
 async function fetchStudentList() {
-            const room = document.getElementById('classSelect').value;
-            document.getElementById('modalRoomTitle').innerText = room;
-            document.getElementById('studentModal').classList.replace('hidden', 'flex');
-            document.getElementById('studentListContainer').innerHTML = '<p class="text-center py-4">กำลังโหลด...</p>';
-            
-            if (window.google && google.script && google.script.run) {
-                // แก้ไขการเรียกใช้: ส่งทั้ง room และใช้ handler ให้ถูกต้อง
-                google.script.run.withSuccessHandler(showStudents).getStudents(room);
-            } else {
-                // สำหรับทดสอบบน Browser ทั่วไป (Mock Data)
-                setTimeout(() => {
-                    const mockData = [{id: '6301001', name: 'นายทดสอบ ระบบ'}, {id: '6301002', name: 'นางสาวเรียนดี ขยัน'}];
-                    showStudents(mockData);
-                }, 1000);
-            }
-        }
-        function showStudents(students) {
-            const container = document.getElementById('studentListContainer');
-            if (!students || students.length === 0) {
-                container.innerHTML = '<p class="text-center py-4 text-red-500">ไม่พบรายชื่อนักเรียนในห้องนี้</p>';
-                return;
-            }
-            container.innerHTML = students.map(s => `
-                <div class="flex items-center justify-between p-3 border-b hover:bg-gray-50 transition">
-                    <div class="text-sm"><b>${s.id}</b><br><span class="text-gray-600">${s.name}</span></div>
-                    <div class="flex gap-2">
-                        <button onclick="onScanSuccess('${s.id}', 'ขาด'); closeModal();" class="px-4 py-2 bg-red-100 text-red-600 rounded-xl text-xs font-bold hover:bg-red-200">ขาด</button>
-                        <button onclick="onScanSuccess('${s.id}', 'ลา'); closeModal();" class="px-4 py-2 bg-yellow-100 text-yellow-600 rounded-xl text-xs font-bold hover:bg-yellow-200">ลา</button>
-                    </div>
-                </div>
-            `).join('');
-        }
+    const room = document.getElementById('classSelect').value; // ดึงค่าห้องจาก Dropdown หลัก
+    if (!room) {
+        Swal.fire('กรุณาเลือกห้องเรียน', '', 'warning');
+        return;
+    }
+
+    document.getElementById('modalRoomTitle').innerText = room;
+    document.getElementById('studentModal').classList.replace('hidden', 'flex');
+    
+    // แสดง Loader ระหว่างรอข้อมูล
+    document.getElementById('studentListContainer').innerHTML = `
+        <div class="text-center py-8">
+            <i class="fas fa-circle-notch fa-spin text-blue-500 text-2xl"></i>
+            <p class="mt-2 text-gray-500">กำลังดึงข้อมูลนักเรียนห้อง ${room}...</p>
+        </div>`;
+
+    // เรียกฟังก์ชันใน code.gs ผ่าน google.script.run
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+            .withSuccessHandler(showStudents)
+            .withFailureHandler(err => {
+                document.getElementById('studentListContainer').innerHTML = 
+                    `<p class="text-red-500 text-center p-4">เกิดข้อผิดพลาด: ${err.message}</p>`;
+            })
+            .getStudents(room); // เรียกฟังก์ชันใน Backend
+    } else {
+        // กรณีทดสอบ Browser ภายนอก (Mock Data)
+        setTimeout(() => {
+            const mockData = [
+                {id: '6301001', name: 'นายทดสอบ ระบบ'}, 
+                {id: '6301002', name: 'นางสาวเรียนดี ขยัน'}
+            ];
+            showStudents(mockData);
+        }, 800);
+    }
+}
+
+// ฟังก์ชันสร้าง UI รายชื่อนักเรียนในป๊อปอัพ
+function showStudents(students) {
+    const container = document.getElementById('studentListContainer');
+    if (!students || students.length === 0) {
+        container.innerHTML = '<p class="text-center py-8 text-gray-500">ไม่พบรายชื่อนักเรียนในห้องนี้</p>';
+        return;
+    }
+
+    container.innerHTML = students.map(s => `
+        <div class="flex items-center justify-between p-4 border-b hover:bg-gray-50 transition">
+            <div class="flex-1">
+                <div class="font-bold text-gray-800">${s.id}</div>
+                <div class="text-sm text-gray-600">${s.name}</div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="onScanSuccess('${s.id}', 'ขาด'); closeModal();" 
+                        class="px-4 py-2 bg-red-100 text-red-600 rounded-xl text-xs font-bold hover:bg-red-200">
+                    ขาด
+                </button>
+                <button onclick="onScanSuccess('${s.id}', 'ลา'); closeModal();" 
+                        class="px-4 py-2 bg-yellow-100 text-yellow-600 rounded-xl text-xs font-bold hover:bg-yellow-200">
+                    ลา
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function closeModal() {
+    document.getElementById('studentModal').classList.add('hidden');
+}
 
         function addToLog(id, status) {
             const log = document.getElementById('activityLog');
