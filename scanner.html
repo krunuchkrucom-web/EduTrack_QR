@@ -190,7 +190,7 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyfvXCor45pzWhdxWLSyhDQLwIE9Lxj09jRR85bWcbwNvOVjrBn-8WJffO0SySgHXkSzw/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxyXTZY3diVMM71aBI0JQI7UnsEJx0sjM2rl4S2lLcDqh5aQJwXkaFJOAaFokxpo8No8g/exec";
         let currentMode = 'attendance';
         let html5QrCode;
         let scanHistory = [];
@@ -271,43 +271,66 @@
         
 // ฟังก์ชันดึงรายชื่อนักเรียนมาแสดงในป๊อปอัพ
 async function fetchStudentList() {
-    const room = document.getElementById('classSelect').value; // ดึงค่าห้องจาก Dropdown หลัก
+    const room = document.getElementById('classSelect').value;
+    const container = document.getElementById('studentListContainer');
+    const modal = document.getElementById('studentModal');
+    
     if (!room) {
         Swal.fire('กรุณาเลือกห้องเรียน', '', 'warning');
         return;
     }
 
+    // แสดง Modal และสถานะกำลังโหลด
     document.getElementById('modalRoomTitle').innerText = room;
-    document.getElementById('studentModal').classList.replace('hidden', 'flex');
-    
-    // แสดง Loader ระหว่างรอข้อมูล
-    document.getElementById('studentListContainer').innerHTML = `
+    container.innerHTML = `
         <div class="text-center py-8">
             <i class="fas fa-circle-notch fa-spin text-blue-500 text-2xl"></i>
-            <p class="mt-2 text-gray-500">กำลังดึงข้อมูลนักเรียนห้อง ${room}...</p>
+            <p class="mt-2 text-gray-500">กำลังโหลดรายชื่อห้อง ${room}...</p>
         </div>`;
+    modal.classList.replace('hidden', 'flex');
 
-    // เรียกฟังก์ชันใน code.gs ผ่าน google.script.run
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-        google.script.run
-            .withSuccessHandler(showStudents)
-            .withFailureHandler(err => {
-                document.getElementById('studentListContainer').innerHTML = 
-                    `<p class="text-red-500 text-center p-4">เกิดข้อผิดพลาด: ${err.message}</p>`;
-            })
-            .getStudents(room); // เรียกฟังก์ชันใน Backend
-    } else {
-        // กรณีทดสอบ Browser ภายนอก (Mock Data)
-        setTimeout(() => {
-            const mockData = [
-                {id: '6301001', name: 'นายทดสอบ ระบบ'}, 
-                {id: '6301002', name: 'นางสาวเรียนดี ขยัน'}
-            ];
-            showStudents(mockData);
-        }, 800);
+    try {
+        // ดึงข้อมูลผ่าน fetch ไปยัง URL ของ Web App
+        // หมายเหตุ: Apps Script ต้องมีฟังก์ชัน doGet ที่รองรับ action=getStudents
+        const response = await fetch(`${WEB_APP_URL}?action=getStudents&room=${encodeURIComponent(room)}`);
+        const students = await response.json();
+
+        if (!students || students.length === 0) {
+            container.innerHTML = '<div class="text-center p-8 text-red-500 font-bold">ไม่พบรายชื่อในห้องนี้</div>';
+            return;
+        }
+
+        // สร้างรายการปุ่ม ขาด/ลา
+        container.innerHTML = students.map(std => `
+            <div class="flex items-center justify-between p-4 border-b hover:bg-gray-50 transition">
+                <div>
+                    <div class="font-bold text-gray-800">${std.id}</div>
+                    <div class="text-sm text-gray-500">${std.name}</div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="markManual('${std.id}', 'ขาด')" 
+                            class="px-4 py-2 bg-red-100 text-red-600 rounded-xl text-xs font-bold hover:bg-red-200">
+                        ขาด
+                    </button>
+                    <button onclick="markManual('${std.id}', 'ลา')" 
+                            class="px-4 py-2 bg-yellow-100 text-yellow-600 rounded-xl text-xs font-bold hover:bg-yellow-200">
+                        ลา
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        container.innerHTML = '<div class="text-center p-8 text-red-500">เชื่อมต่อฐานข้อมูลล้มเหลว หรือ URL ผิดพลาด</div>';
+        console.error("Fetch Error:", error);
     }
 }
-
+function markManual(id, status) {
+    // เรียกใช้ฟังก์ชันบันทึกข้อมูลที่มีอยู่แล้วในหน้าเว็บ
+    onScanSuccess(id, status); 
+    // ปิดหน้าต่างป๊อปอัพ
+    closeModal();
+}
 // ฟังก์ชันสร้าง UI รายชื่อนักเรียนในป๊อปอัพ
 function showStudents(students) {
     const container = document.getElementById('studentListContainer');
