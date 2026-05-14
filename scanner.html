@@ -210,6 +210,28 @@
                 assDetail.classList.remove('hidden'); attDetail.classList.add('hidden');
             }
         }
+                // เพิ่มฟังก์ชันนี้ในส่วน <script> ของ HTML
+        async function loadRooms() {
+            const select = document.getElementById('classSelect');
+            try {
+                const response = await fetch(`${WEB_APP_URL}?action=getRooms`);
+                const rooms = await response.json();
+        
+                if (rooms && rooms.length > 0) {
+                    select.innerHTML = rooms.map(room => 
+                        `<option value="${room}">${room}</option>`
+                    ).join('');
+                }
+            } catch (error) {
+                console.error("Error loading rooms:", error);
+            }
+        }
+        
+        // ปรับปรุงส่วน window.onload เดิม
+        window.onload = () => {
+            initScanner(); // เปิดกล้อง
+            loadRooms();   // ดึงรายชื่อห้องจาก Sheet
+        };
 
         async function initScanner() {
             try {
