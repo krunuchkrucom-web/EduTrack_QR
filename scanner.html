@@ -71,9 +71,9 @@
             <div class="flex items-center bg-white p-2 rounded-2xl shadow-sm border">
                 <span class="px-4 text-sm font-semibold text-gray-600 border-r">เลือกห้องเรียน</span>
                 <select id="classSelect" class="px-4 py-1 text-blue-600 font-bold focus:outline-none bg-transparent">
-                    <option value="ปวช. 1/1">ปวช. 1/1</option>
-                    <option value="ปวช. 2/1">ปวช. 2/1</option>
-                    <option value="ปวช. 3/5">ปวช. 3/5</option>
+                    <option value="ปวช.1/1">ปวช.1/1</option>
+                    <option value="ปวช.2/1">ปวช.2/1</option>
+                    <option value="ปวช.3/5">ปวช.3/5</option>
                 </select>
             </div>
         </div>
@@ -243,7 +243,28 @@
                 }
             } catch (err) { document.getElementById('statusLabel').innerText = "กล้องปิดอยู่"; }
         }
+// ฟังก์ชันดึงห้องเรียนจาก Sheet มาใส่ใน select
+async function updateClassDropdown() {
+    const select = document.getElementById('classSelect');
+    try {
+        const response = await fetch(`${WEB_APP_URL}?action=getRooms`);
+        const rooms = await response.json();
+        
+        if (rooms.length > 0) {
+            select.innerHTML = rooms.map(room => 
+                `<option value="${room}">${room}</option>`
+            ).join('');
+            
+            // เมื่อโหลดห้องเสร็จ ให้ดึงรายชื่อนักเรียนห้องแรกทันที
+            fetchStudents(select.value); 
+        }
+    } catch (err) {
+        console.error("โหลดห้องเรียนล้มเหลว:", err);
+    }
+}
 
+// เรียกใช้ฟังก์ชันนี้ตอนโหลดหน้าเว็บ (ใส่ใน window.onload หรือที่เดียวกับ initScanner)
+window.addEventListener('load', updateClassDropdown);
    async function onScanSuccess(decodedText, manualStatus = null) {
             if (isProcessing) return;
             isProcessing = true;
